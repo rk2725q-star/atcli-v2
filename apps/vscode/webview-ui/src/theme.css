@@ -1,6 +1,6 @@
 /* Editor theme mapping */
 @theme {
-	--color-cline: #9663f1;
+	--color-cline: #3b82f6;
 	--color-background: var(--vscode-sideBar-background);
 	--color-border: var(--vscode-focusBorder);
 	--color-border-panel: var(--vscode-panel-border);
@@ -314,7 +314,7 @@
 			@apply hidden;
 		}
 		code {
-			@apply break-words rounded-xs;
+			@apply wrap-break-word rounded-xs;
 		}
 		p,
 		li,
@@ -349,7 +349,7 @@
 		}
 
 		code:not(pre > code) {
-			@apply font-mono text-preformat bg-code-block-background border border-text-separator rounded-xs py-0.5 whitespace-pre-line break-words text-editor-size;
+			@apply font-mono text-preformat bg-code-block-background border border-text-separator rounded-xs py-0.5 whitespace-pre-line wrap-break-word text-editor-size;
 		}
 
 		/* Inline cursor container - adds blinking cursor after last child */

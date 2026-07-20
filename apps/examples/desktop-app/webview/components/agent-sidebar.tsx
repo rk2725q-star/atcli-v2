@@ -357,7 +357,7 @@ export function AgentSidebar({
 			<DropdownMenuTrigger asChild>
 				<Button
 					aria-label="Filter sessions"
-					className="m-0! inline-flex size-8 items-center justify-center rounded-md p-0! text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+					className="m-0! inline-flex size-8 items-center justify-center rounded-lg p-0! text-sidebar-foreground/55 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
 					variant="ghost"
 					size="icon"
 				>
@@ -387,7 +387,7 @@ export function AgentSidebar({
 			<DropdownMenuTrigger asChild>
 				<Button
 					aria-label={`Sort sessions: ${sortMode === "time" ? "Time" : "Project"}`}
-					className="m-0! inline-flex size-8 items-center justify-center rounded-md p-0! text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+					className="m-0! inline-flex size-8 items-center justify-center rounded-lg p-0! text-sidebar-foreground/55 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
 					size="icon"
 					title={sortMode === "time" ? "Sort by time" : "Sort by project"}
 					variant="ghost"
@@ -439,30 +439,45 @@ export function AgentSidebar({
 
 	return (
 		<>
-			<div className="flex h-full min-h-0 w-full min-w-0 shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
+			<div className="atcli-sidebar flex h-full min-h-0 w-full min-w-0 shrink-0 flex-col overflow-hidden text-sidebar-foreground">
 				<div
 					className={cn(
-						"flex h-16 shrink-0 items-center px-4",
+						"flex h-18 shrink-0 items-center px-4",
 						isCollapsed && "justify-center px-0",
 					)}
 				>
 					<button
-						aria-label="Cline home"
-						className="rounded-md p-1 text-sidebar-foreground transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+						aria-label="ATCLI home"
+						className={cn(
+							"group flex min-w-0 items-center gap-3 rounded-md p-1 text-sidebar-foreground transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+							isCollapsed && "justify-center",
+						)}
 						onClick={openHome}
 						type="button"
 					>
-						<ClineLogo className="h-6 w-6" />
+						<span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_14px_28px_-18px_var(--sidebar-primary)]">
+							<ClineLogo className="h-5 w-5" />
+						</span>
+						{!isCollapsed ? (
+							<span className="min-w-0 text-left">
+								<span className="block truncate text-sm font-semibold leading-4">
+									ATCLI
+								</span>
+								<span className="block truncate font-mono text-[10px] uppercase text-sidebar-foreground/55">
+									Agent console
+								</span>
+							</span>
+						) : null}
 					</button>
 				</div>
 
 				<div className={cn("shrink-0 px-3", isCollapsed && "px-1.5")}>
 					<Button
 						className={cn(
-							"min-w-0 justify-start",
+							"min-w-0 justify-start rounded-lg py-2.5",
 							view === "chat" &&
 								isHomeActive &&
-								"bg-sidebar-accent text-sidebar-accent-foreground",
+								"bg-sidebar-accent text-sidebar-accent-foreground shadow-inner",
 							isCollapsed && "mx-auto size-9 justify-center px-0",
 						)}
 						aria-label="Home"
@@ -517,10 +532,10 @@ export function AgentSidebar({
 				) : (
 					<>
 						<div className="mt-5 shrink-0 px-3">
-							<div className="flex h-8 items-center justify-between gap-2">
+							<div className="flex h-9 items-center justify-between gap-2">
 								<button
 									className={cn(
-										"min-w-0 truncate text-sm font-medium text-muted-foreground transition-colors hover:text-sidebar-foreground",
+										"min-w-0 truncate font-mono text-[11px] font-medium uppercase text-sidebar-foreground/55 transition-colors hover:text-sidebar-foreground",
 										view === "sessions" && "text-sidebar-foreground",
 									)}
 									onClick={openSessions}
@@ -528,10 +543,10 @@ export function AgentSidebar({
 								>
 									{sortMode === "time" ? "Sessions" : "Projects"}
 								</button>
-								<div className="flex shrink-0 items-center gap-0.5">
+								<div className="flex shrink-0 items-center gap-1">
 									<Button
 										aria-label="Search sessions"
-										className="m-0! size-8 p-0! text-muted-foreground hover:text-sidebar-foreground"
+										className="m-0! size-8 rounded-lg p-0! text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground"
 										onClick={() => setSearchOpen((current) => !current)}
 										size="icon"
 										title="Search sessions"
@@ -544,7 +559,7 @@ export function AgentSidebar({
 									{filterMenu}
 									<Button
 										aria-label="New session"
-										className="m-0! size-8 p-0! text-muted-foreground hover:text-sidebar-foreground"
+										className="m-0! size-8 rounded-lg bg-sidebar-primary p-0! text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary/90"
 										onClick={openNewThread}
 										size="icon"
 										title="New session"
@@ -556,10 +571,10 @@ export function AgentSidebar({
 								</div>
 							</div>
 							{searchOpen ? (
-								<div className="mt-1 flex min-w-0 items-center gap-2 overflow-hidden rounded-md border border-sidebar-border bg-background/70 px-2 py-1">
+								<div className="mt-2 flex min-w-0 items-center gap-2 overflow-hidden rounded-lg border border-sidebar-border bg-white/8 px-2 py-1 text-sidebar-foreground backdrop-blur">
 									<Search className="size-4 shrink-0" />
 									<Input
-										className="h-7 min-w-0 flex-1 border-0 bg-transparent px-0 text-sm text-sidebar-foreground shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0"
+										className="h-7 min-w-0 flex-1 border-0 bg-transparent px-0 text-sm text-sidebar-foreground shadow-none outline-none placeholder:text-sidebar-foreground/45 focus-visible:ring-0"
 										autoFocus={true}
 										onChange={(e) => setSearchQuery(e.target.value)}
 										placeholder="Search sessions..."
@@ -569,9 +584,9 @@ export function AgentSidebar({
 							) : null}
 						</div>
 
-						<div className="mt-1 min-h-0 w-full flex-1">
+						<div className="mt-2 min-h-0 w-full flex-1">
 							<ScrollArea className="h-full min-h-0 w-full min-w-0">
-								<div className="flex min-w-0 flex-col gap-0.5 pb-3 px-3">
+								<div className="flex min-w-0 flex-col gap-1 pb-3 px-3">
 									{isLoadingHistory && threads.length === 0 ? (
 										<div className="p-4 text-xs text-muted-foreground">
 											Loading session history...
@@ -684,7 +699,7 @@ export function AgentSidebar({
 						type="button"
 						variant="sidebarItem"
 						className={cn(
-							"min-w-0 justify-start",
+							"min-w-0 justify-start rounded-lg",
 							view === "settings" &&
 								"bg-sidebar-accent text-sidebar-accent-foreground",
 							isCollapsed && "mx-auto size-9 justify-center px-0",
@@ -696,16 +711,16 @@ export function AgentSidebar({
 						{!isCollapsed ? "Settings" : null}
 					</Button>
 					{!isCollapsed ? (
-						<div className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-sidebar-foreground">
-							<span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-								C
+						<div className="mt-3 flex items-center gap-3 rounded-lg border border-sidebar-border bg-white/6 px-3 py-2 text-sidebar-foreground">
+							<span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-[11px] font-semibold text-sidebar-primary-foreground">
+								A
 							</span>
 							<span className="min-w-0">
 								<span className="block truncate text-sm font-medium">
-									Cline Desktop
+									ATCLI Desktop
 								</span>
-								<span className="block text-[11px] text-muted-foreground">
-									Local
+								<span className="block text-[11px] text-sidebar-foreground/55">
+									Local workspace
 								</span>
 							</span>
 						</div>
@@ -776,7 +791,7 @@ function ProjectSection({
 		<div className="mb-1 min-w-0">
 			<button
 				aria-expanded={!collapsed}
-				className="flex h-8 w-full min-w-0 items-center gap-1.5 rounded-md px-1 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+				className="flex h-8 w-full min-w-0 items-center gap-1.5 rounded-lg px-1 text-left font-mono text-[11px] font-medium uppercase text-sidebar-foreground/62 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
 				onClick={onToggle}
 				title={label}
 				type="button"
@@ -854,7 +869,7 @@ function ThreadItem({
 		return (
 			<div
 				className={cn(
-					"grid h-8 w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1 overflow-hidden rounded-md px-2",
+					"grid h-10 w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1 overflow-hidden rounded-lg px-2",
 					isActive
 						? "bg-sidebar-accent text-sidebar-accent-foreground"
 						: "text-sidebar-foreground/80",
@@ -881,19 +896,19 @@ function ThreadItem({
 					<HoverCardTrigger asChild>
 						<button
 							className={cn(
-								"group grid h-8 w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sm font-normal transition-colors",
+								"group grid min-h-10 w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 overflow-hidden rounded-lg border px-2.5 py-2 text-left text-sm font-normal transition-all",
 								isActive
-									? "bg-sidebar-accent text-sidebar-accent-foreground"
-									: "text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
+									? "border-sidebar-primary/40 bg-sidebar-accent text-sidebar-accent-foreground shadow-[inset_0_1px_0_color-mix(in_oklab,white_10%,transparent)]"
+									: "border-transparent text-sidebar-foreground/76 hover:border-sidebar-border hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
 							)}
 							disabled={pending}
 							onClick={onClick}
 							type="button"
 						>
-							<span className="block max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-normal leading-tight">
+							<span className="block max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium leading-tight">
 								{title}
 							</span>
-							<span className="flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+							<span className="flex shrink-0 items-center gap-1.5 font-mono text-[10px] text-sidebar-foreground/48">
 								{thread.pinned ? (
 									<Pin aria-label="Pinned" className="size-3" />
 								) : statusDotClass ? (

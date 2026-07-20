@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { FileDiff, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ChatSessionStatus } from "@/lib/chat-schema";
 import { cn } from "@/lib/utils";
@@ -82,13 +82,13 @@ export function AgentHeader({
 	const triggerDeleteSession = () => onDeleteSession?.();
 
 	return (
-		<header className="flex h-12 items-center justify-between gap-2 px-4 max-md:pl-12">
+		<header className="flex h-14 items-center justify-between gap-3 px-4 max-md:pl-12">
 			{/* Left: thread title */}
 			<div className="flex min-w-0 flex-1 items-center gap-2">
 				<output
 					aria-label={`Session status: ${status}`}
 					className={cn(
-						"size-2 shrink-0 rounded font-mono",
+						"size-2.5 shrink-0 rounded-full font-mono shadow-[0_0_0_3px_color-mix(in_oklab,currentColor_12%,transparent)]",
 						status === "running"
 							? "bg-green-500"
 							: status === "failed"
@@ -125,9 +125,9 @@ export function AgentHeader({
 				) : (
 					<button
 						className={cn(
-							"min-w-0 truncate text-sm font-medium text-foreground",
+							"min-w-0 truncate text-sm font-semibold text-foreground",
 							canEditTitle &&
-								"rounded px-1 py-0.5 transition-colors hover:bg-accent",
+								"rounded-md px-1.5 py-1 transition-colors hover:bg-accent",
 						)}
 						disabled={!canEditTitle || renamingTitle}
 						onClick={() => {
@@ -147,7 +147,7 @@ export function AgentHeader({
 					<DropdownMenuTrigger asChild>
 						<Button
 							aria-label="Session actions"
-							className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+							className="shrink-0 rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 							id="show-more-btn"
 							variant="ghost"
 							size="icon-sm"
@@ -174,7 +174,7 @@ export function AgentHeader({
 					<Button
 						aria-label={`Open diff: ${additions} additions, ${deletions} deletions`}
 						className={cn(
-							"flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-xs font-mono transition-colors",
+							"flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs font-mono transition-colors",
 							hasChanges
 								? "hover:bg-secondary/80"
 								: "cursor-default opacity-60",
@@ -186,6 +186,7 @@ export function AgentHeader({
 						type="button"
 						variant="secondary"
 					>
+						<FileDiff className="size-3" />
 						<span className="text-chart-2">+{additions}</span>
 						<span className="text-destructive">-{deletions}</span>
 					</Button>

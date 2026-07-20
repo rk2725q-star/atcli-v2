@@ -423,7 +423,7 @@ export function SettingsView({
 		);
 
 	return (
-		<div className="grid h-full grid-rows-[3rem_minmax(0,1fr)] overflow-hidden bg-background md:block">
+		<div className="grid h-full grid-rows-[3rem_minmax(0,1fr)] overflow-hidden bg-transparent md:block">
 			<div aria-hidden="true" className="md:hidden" />
 			<div className="min-h-0 overflow-hidden md:h-full">{content}</div>
 		</div>
@@ -523,8 +523,8 @@ function GeneralSettingsContent() {
 				description="Manage desktop preferences for this browser and CLI environment."
 				title="Settings"
 			/>
-			<section className="max-w-[86rem]">
-				<div className="flex min-h-20 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
+			<section className="rounded-lg atcli-panel px-5">
+				<div className="flex min-h-20 items-center justify-between gap-5 border-b border-border/70 max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div>
 						<p className="text-[17px] font-semibold text-foreground">
 							Dark mode
@@ -539,7 +539,7 @@ function GeneralSettingsContent() {
 						onCheckedChange={updateTheme}
 					/>
 				</div>
-				<div className="flex min-h-20 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
+				<div className="flex min-h-20 items-center justify-between gap-5 border-b border-border/70 max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div>
 						<p className="text-[17px] font-semibold text-foreground">
 							Auto update
@@ -560,7 +560,7 @@ function GeneralSettingsContent() {
 						onCheckedChange={(checked) => void updateAutoUpdateEnabled(checked)}
 					/>
 				</div>
-				<div className="flex min-h-20 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
+				<div className="flex min-h-20 items-center justify-between gap-5 border-b border-border/70 max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div>
 						<p className="text-[17px] font-semibold text-foreground">
 							Telemetry

@@ -8,6 +8,71 @@
 @source "../../node_modules/streamdown/dist";
 
 @layer base {
+	:root {
+		--font-sans: "Schibsted Grotesk Variable", "Segoe UI", sans-serif;
+		--font-mono:
+			"Azeret Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
+			"Liberation Mono", monospace;
+		--background: oklch(0.982 0.011 92);
+		--foreground: oklch(0.18 0.018 240);
+		--card: oklch(0.998 0.004 105 / 94%);
+		--card-foreground: var(--foreground);
+		--popover: oklch(0.998 0.004 105);
+		--popover-foreground: var(--foreground);
+		--primary: oklch(0.52 0.14 166);
+		--primary-emphasis: oklch(0.61 0.16 35);
+		--primary-foreground: oklch(0.99 0.004 105);
+		--secondary: oklch(0.93 0.018 92);
+		--secondary-foreground: oklch(0.23 0.019 240);
+		--muted: oklch(0.94 0.012 95);
+		--muted-foreground: oklch(0.48 0.021 240);
+		--accent: oklch(0.9 0.04 166);
+		--accent-foreground: oklch(0.2 0.04 166);
+		--border: oklch(0.86 0.018 95);
+		--input: oklch(0.86 0.018 95);
+		--ring: oklch(0.62 0.13 166);
+		--chart-1: oklch(0.52 0.14 166);
+		--chart-2: oklch(0.62 0.16 35);
+		--chart-3: oklch(0.54 0.12 245);
+		--chart-4: oklch(0.72 0.15 88);
+		--chart-5: oklch(0.6 0.18 18);
+		--sidebar: oklch(0.19 0.025 239);
+		--sidebar-foreground: oklch(0.94 0.012 92);
+		--sidebar-primary: oklch(0.71 0.14 166);
+		--sidebar-primary-foreground: oklch(0.16 0.02 239);
+		--sidebar-accent: oklch(0.27 0.035 239);
+		--sidebar-accent-foreground: oklch(0.98 0.008 95);
+		--sidebar-border: oklch(1 0 0 / 12%);
+		--sidebar-ring: oklch(0.71 0.14 166);
+		--radius: 0.5rem;
+	}
+
+	.dark {
+		--background: oklch(0.16 0.02 239);
+		--foreground: oklch(0.95 0.01 95);
+		--card: oklch(0.21 0.025 239 / 94%);
+		--card-foreground: var(--foreground);
+		--popover: oklch(0.22 0.028 239);
+		--popover-foreground: var(--foreground);
+		--primary: oklch(0.7 0.14 166);
+		--primary-emphasis: oklch(0.73 0.16 35);
+		--primary-foreground: oklch(0.15 0.02 239);
+		--secondary: oklch(0.27 0.025 239);
+		--secondary-foreground: oklch(0.95 0.01 95);
+		--muted: oklch(0.25 0.022 239);
+		--muted-foreground: oklch(0.72 0.018 95);
+		--accent: oklch(0.31 0.05 166);
+		--accent-foreground: oklch(0.96 0.012 95);
+		--border: oklch(1 0 0 / 12%);
+		--input: oklch(1 0 0 / 16%);
+		--ring: oklch(0.7 0.14 166);
+		--sidebar: oklch(0.13 0.02 239);
+		--sidebar-foreground: oklch(0.95 0.01 95);
+		--sidebar-accent: oklch(0.23 0.035 239);
+		--sidebar-accent-foreground: oklch(0.98 0.008 95);
+		--sidebar-border: oklch(1 0 0 / 10%);
+	}
+
 	html,
 	body {
 		height: 100%;
@@ -17,6 +82,81 @@
 
 	#__next {
 		height: 100%;
+	}
+
+	body {
+		background:
+			linear-gradient(135deg, oklch(0.95 0.03 166 / 50%), transparent 34%),
+			linear-gradient(315deg, oklch(0.93 0.04 35 / 42%), transparent 38%),
+			var(--background);
+	}
+
+	::selection {
+		background: color-mix(in oklab, var(--primary) 24%, transparent);
+	}
+}
+
+@layer components {
+	.atcli-shell {
+		background:
+			radial-gradient(
+				circle at 18% 15%,
+				color-mix(in oklab, var(--primary) 18%, transparent),
+				transparent 26rem
+			),
+			radial-gradient(
+				circle at 92% 8%,
+				color-mix(in oklab, var(--primary-emphasis) 18%, transparent),
+				transparent 25rem
+			),
+			linear-gradient(
+				180deg,
+				color-mix(in oklab, var(--background) 94%, white),
+				var(--background)
+			);
+	}
+
+	.atcli-sidebar {
+		background:
+			linear-gradient(180deg, oklch(0.23 0.032 239), oklch(0.145 0.024 239)),
+			var(--sidebar);
+		box-shadow: inset -1px 0 0 color-mix(in oklab, white 9%, transparent);
+	}
+
+	.atcli-glass {
+		border: 1px solid color-mix(in oklab, var(--border) 80%, white 20%);
+		background: color-mix(in oklab, var(--card) 84%, transparent);
+		box-shadow:
+			0 18px 50px -36px color-mix(in oklab, var(--foreground) 38%, transparent),
+			inset 0 1px 0 color-mix(in oklab, white 72%, transparent);
+		backdrop-filter: blur(18px);
+	}
+
+	.atcli-panel {
+		border: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
+		background: color-mix(in oklab, var(--card) 92%, transparent);
+		box-shadow: 0 20px 60px -48px
+			color-mix(in oklab, var(--foreground) 42%, transparent);
+	}
+
+	.atcli-soft-grid {
+		background-image:
+			linear-gradient(
+				color-mix(in oklab, var(--foreground) 7%, transparent) 1px,
+				transparent 1px
+			),
+			linear-gradient(
+				90deg,
+				color-mix(in oklab, var(--foreground) 7%, transparent) 1px,
+				transparent 1px
+			);
+		background-size: 34px 34px;
+		mask-image: linear-gradient(to bottom, black, transparent 80%);
+	}
+
+	.atcli-premium-scroll {
+		scrollbar-color: color-mix(in oklab, var(--foreground) 28%, transparent)
+			transparent;
 	}
 }
 

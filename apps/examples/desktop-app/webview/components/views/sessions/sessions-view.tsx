@@ -6,6 +6,7 @@ import {
 	Filter,
 	Folder,
 	GitFork,
+	History,
 	Loader2,
 	MoreHorizontal,
 	Pencil,
@@ -194,14 +195,19 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 	};
 
 	return (
-		<div className="flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
-			<header className="flex shrink-0 items-end justify-between gap-6 px-18 pb-7 pt-10 max-[1200px]:px-8 max-md:pl-12 max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:pr-4 max-[720px]:pt-5">
+		<div className="flex h-full min-h-0 flex-col overflow-hidden bg-transparent text-foreground">
+			<header className="mx-auto flex w-full max-w-[1180px] shrink-0 items-end justify-between gap-6 px-6 pb-5 pt-8 max-md:pl-12 max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:pr-4 max-[720px]:pt-5">
 				<div className="min-w-0">
-					<h1 className="text-[32px] font-semibold leading-[1.15] tracking-normal">
-						Sessions
+					<div className="mb-3 inline-flex items-center gap-2 rounded-lg border border-border/70 bg-card/80 px-3 py-1.5 font-mono text-[11px] uppercase text-muted-foreground shadow-sm">
+						<History className="size-3.5 text-primary" />
+						History
+					</div>
+					<h1 className="text-[38px] font-semibold leading-[1.05] tracking-normal">
+						Every session, easy to recover.
 					</h1>
-					<p className="mt-3 text-[15px] leading-6 text-muted-foreground">
-						Recent sessions across clients and workspaces.
+					<p className="mt-3 max-w-2xl text-[15px] leading-6 text-muted-foreground">
+						Search, filter, fork, rename, or delete previous work across
+						projects without leaving the command center.
 					</p>
 				</div>
 				<div className="flex min-w-0 items-center gap-2">
@@ -209,7 +215,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 						<Search className="-translate-y-1/2 pointer-events-none absolute left-2.5 top-1/2 size-4 text-muted-foreground" />
 						<Input
 							aria-label="Search sessions"
-							className="h-8 pl-8"
+							className="h-9 rounded-lg bg-card/80 pl-8 shadow-sm"
 							onChange={(event) => setQuery(event.target.value)}
 							placeholder="Search"
 							value={query}
@@ -219,7 +225,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 						<DropdownMenuTrigger asChild>
 							<Button
 								aria-label="Sort sessions"
-								className="h-8 rounded-md px-2.5"
+								className="h-9 rounded-lg px-2.5 shadow-sm"
 								size="sm"
 								title="Sort sessions"
 								type="button"
@@ -241,7 +247,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 						<DropdownMenuTrigger asChild>
 							<Button
 								aria-label="Filter sessions"
-								className="h-8 rounded-md px-2.5"
+								className="h-9 rounded-lg px-2.5 shadow-sm"
 								size="sm"
 								title="Filter sessions"
 								type="button"
@@ -286,9 +292,9 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 				</div>
 			</header>
 
-			<section className="min-h-0 flex-1 overflow-auto px-18 pb-10 max-[1200px]:px-8 max-[720px]:px-4">
-				<div className="min-w-240 overflow-hidden rounded-lg border bg-card">
-					<div className="grid grid-cols-[minmax(14rem,1.35fr)_minmax(9rem,0.8fr)_minmax(12rem,1fr)_7rem_5rem_6rem_2.5rem] gap-x-4 bg-muted/40 px-4 py-3 text-sm font-medium text-muted-foreground">
+			<section className="min-h-0 flex-1 overflow-auto px-6 pb-8 max-[720px]:px-4">
+				<div className="mx-auto min-w-240 max-w-[1180px] overflow-hidden rounded-lg atcli-panel">
+					<div className="grid grid-cols-[minmax(14rem,1.35fr)_minmax(9rem,0.8fr)_minmax(12rem,1fr)_7rem_5rem_6rem_2.5rem] gap-x-4 border-b border-border/70 bg-muted/50 px-4 py-3 font-mono text-[11px] font-medium uppercase text-muted-foreground">
 						<span>Session</span>
 						<span>Workspace</span>
 						<span>Model</span>
@@ -325,10 +331,10 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 							return (
 								<div
 									className={cn(
-										"grid min-h-14 grid-cols-[minmax(14rem,1.35fr)_minmax(9rem,0.8fr)_minmax(12rem,1fr)_7rem_5rem_6rem_2.5rem] items-center gap-x-4 border-t px-4 py-3 text-sm transition-colors",
+										"grid min-h-15 grid-cols-[minmax(14rem,1.35fr)_minmax(9rem,0.8fr)_minmax(12rem,1fr)_7rem_5rem_6rem_2.5rem] items-center gap-x-4 border-t border-border/65 px-4 py-3 text-sm transition-colors",
 										activeSessionId === thread.id
-											? "bg-accent/50"
-											: "hover:bg-accent/30",
+											? "bg-primary/10"
+											: "hover:bg-accent/35",
 									)}
 									key={thread.id}
 								>
@@ -417,7 +423,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 												<span className="sr-only">Open session: </span>
 												<span
 													className={cn(
-														"size-1.5 shrink-0 rounded-full",
+														"size-2 shrink-0 rounded-full shadow-[0_0_0_3px_color-mix(in_oklab,currentColor_12%,transparent)]",
 														statusTone(thread.status),
 													)}
 													aria-hidden="true"

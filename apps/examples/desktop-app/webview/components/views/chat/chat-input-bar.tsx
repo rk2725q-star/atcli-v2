@@ -637,14 +637,14 @@ export function ChatInputBar({
 			className={cn(
 				"bg-card",
 				variant === "welcome"
-					? "overflow-visible rounded-xl border border-border/90 bg-card/90 shadow-[0_24px_80px_-56px_color-mix(in_oklab,var(--primary)_72%,transparent)] backdrop-blur-md"
-					: "border-t border-border bg-card/95 backdrop-blur-sm",
+					? "overflow-visible rounded-lg atcli-glass"
+					: "border-t border-border/70 bg-card/95 backdrop-blur-sm",
 			)}
 		>
 			{/* Input area */}
-			<div className={cn("px-4 py-3", variant === "welcome" && "pb-2 pt-4")}>
+			<div className={cn("px-4 py-3", variant === "welcome" && "pb-3 pt-4")}>
 				{promptsInQueue.length > 0 && (
-					<div className="mb-3 rounded-lg border border-border bg-background/70 p-2">
+					<div className="mb-3 rounded-lg border border-border bg-background/70 p-2 shadow-sm">
 						<div className="mb-2 flex items-center justify-between gap-2">
 							<div className="text-[11px] font-medium text-foreground">
 								Queued for upcoming turns
@@ -871,9 +871,9 @@ export function ChatInputBar({
 					)}
 					<div
 						className={cn(
-							"flex items-end gap-2 rounded-lg border border-border bg-background px-3 py-2.5 transition-all focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20",
+							"flex items-end gap-2 rounded-lg border border-border bg-background/86 px-3 py-3 transition-all focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15",
 							variant === "welcome" &&
-								"min-h-16 items-start rounded-none border-0 bg-transparent px-0 py-0 focus-within:ring-0",
+								"min-h-28 items-start rounded-md border-0 bg-transparent px-0 py-0 focus-within:ring-0",
 						)}
 					>
 						<textarea
@@ -894,7 +894,10 @@ export function ChatInputBar({
 							}
 							aria-expanded={slashOpen || mentionOpen}
 							aria-haspopup="listbox"
-							className="max-h-60 min-h-5 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-5 text-foreground placeholder:text-muted-foreground outline-none"
+							className={cn(
+								"max-h-60 min-h-5 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-5 text-foreground placeholder:text-muted-foreground outline-none",
+								variant === "welcome" && "text-[15px] leading-6",
+							)}
 							onChange={(e) => {
 								onPromptInputChange(e.target.value);
 								setCursorIndex(
@@ -1023,7 +1026,7 @@ export function ChatInputBar({
 			</div>
 
 			{/* Composer settings and submit */}
-			<div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border px-3 py-2 text-[11px] text-muted-foreground max-[560px]:grid max-[560px]:grid-cols-[auto_auto_minmax(0,1fr)_auto] max-[560px]:items-center">
+			<div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border/70 bg-background/35 px-3 py-2.5 text-[11px] text-muted-foreground max-[560px]:grid max-[560px]:grid-cols-[auto_auto_minmax(0,1fr)_auto] max-[560px]:items-center">
 				<div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 max-[560px]:contents">
 					<button
 						aria-label="Attach files"
@@ -1045,11 +1048,11 @@ export function ChatInputBar({
 						ref={fileInputRef}
 						type="file"
 					/>
-					<div className="flex shrink-0 items-center rounded-md bg-muted p-0.5 max-[560px]:col-start-2 max-[560px]:row-start-1">
+					<div className="flex shrink-0 items-center rounded-lg border border-border/60 bg-muted/80 p-0.5 max-[560px]:col-start-2 max-[560px]:row-start-1">
 						<button
 							aria-pressed={mode === "plan"}
 							className={cn(
-								"rounded px-2 py-1 transition-colors",
+								"rounded-md px-2 py-1 transition-colors",
 								mode === "plan"
 									? "bg-background text-foreground shadow-xs"
 									: "hover:text-foreground",
@@ -1064,7 +1067,7 @@ export function ChatInputBar({
 						<button
 							aria-pressed={mode === "act"}
 							className={cn(
-								"rounded px-2 py-1 transition-colors",
+								"rounded-md px-2 py-1 transition-colors",
 								mode === "act"
 									? "bg-background text-foreground shadow-xs"
 									: "hover:text-foreground",
@@ -1160,7 +1163,7 @@ export function ChatInputBar({
 								className={cn(
 									"p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50",
 									variant === "welcome"
-										? "rounded-md bg-[linear-gradient(145deg,var(--primary-emphasis),var(--primary))] text-white shadow-sm hover:brightness-110"
+										? "rounded-md bg-[linear-gradient(145deg,var(--primary),var(--primary-emphasis))] text-white shadow-[0_12px_28px_-18px_var(--primary)] hover:brightness-105"
 										: "rounded-full bg-foreground text-background hover:bg-foreground/80",
 								)}
 								disabled={!canSend}

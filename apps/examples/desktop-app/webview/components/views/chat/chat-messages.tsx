@@ -328,11 +328,11 @@ function ChatMessagesImpl({
 				<ConversationContent
 					className={cn(
 						"relative mx-auto min-h-full w-full min-w-0 max-w-full overflow-x-hidden",
-						showIdleDetails ? "p-0" : "px-6 py-6",
+						showIdleDetails ? "p-0" : "px-6 py-7 max-md:px-4",
 					)}
 				>
 					{showIdleDetails ? null : (
-						<div className="flex min-h-full w-full min-w-0 flex-col gap-2 overflow-x-hidden">
+						<div className="mx-auto flex min-h-full w-full max-w-[960px] flex-col gap-3 overflow-x-hidden">
 							{pendingToolApprovals.length > 0 ? (
 								<ToolApprovalPanel
 									items={pendingToolApprovals}
@@ -484,7 +484,7 @@ function ToolApprovalPanel({
 	onReject: (requestId: string) => void;
 }) {
 	return (
-		<section className="rounded-xl border border-amber-400/40 bg-amber-500/5 p-3">
+		<section className="rounded-lg border border-amber-400/40 bg-amber-500/7 p-3 shadow-sm">
 			<div className="flex items-center gap-2 text-sm font-medium text-foreground">
 				<ShieldAlert className="h-4 w-4 text-amber-500" />
 				Tool approval required
@@ -499,7 +499,7 @@ function ToolApprovalPanel({
 					const error = requestErrors[item.requestId];
 					return (
 						<div
-							className="rounded-lg border border-border/80 bg-background/70 p-3"
+							className="rounded-lg border border-border/80 bg-background/80 p-3"
 							key={item.requestId}
 						>
 							<div className="flex items-center justify-between gap-2">
@@ -575,7 +575,7 @@ function AskQuestionPanel({
 	onAnswer: (requestId: string, answer: string) => void;
 }) {
 	return (
-		<section className="rounded-xl border border-blue-400/40 bg-blue-500/5 p-3">
+		<section className="rounded-lg border border-primary/30 bg-primary/7 p-3 shadow-sm">
 			<div className="flex items-center gap-2 text-sm font-medium text-foreground">
 				<MessagesSquare className="h-4 w-4 text-blue-500" />
 				Follow-up question

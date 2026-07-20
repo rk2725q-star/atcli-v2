@@ -117,14 +117,14 @@ export function ProviderListContent({
 		<ScrollArea className="h-full">
 			<div
 				className={cn(
-					"py-10 max-[720px]:px-4 max-[720px]:py-5",
-					isPanel ? "px-8" : "px-18 max-[1200px]:px-8",
+					"py-8 max-[720px]:px-4 max-[720px]:py-5",
+					isPanel ? "px-6" : "mx-auto max-w-[1180px] px-6",
 				)}
 			>
 				<div
 					className={cn(
-						"mb-8 flex items-start justify-between gap-6 max-[860px]:flex-col max-[860px]:items-stretch",
-						isPanel ? "max-w-none" : "max-w-[42rem]",
+						"mb-6 flex items-start justify-between gap-6 rounded-lg atcli-glass px-5 py-4 max-[860px]:flex-col max-[860px]:items-stretch",
+						isPanel ? "max-w-none" : "max-w-[52rem]",
 					)}
 				>
 					<div className="min-w-0">
@@ -153,7 +153,7 @@ export function ProviderListContent({
 							<Search className="size-4" />
 						</Button>
 						<Button
-							className="h-8 rounded-md bg-foreground px-3 text-sm text-background hover:bg-foreground/90"
+							className="h-9 rounded-lg bg-foreground px-3 text-sm text-background hover:bg-foreground/90"
 							onClick={onAddProvider}
 							type="button"
 						>
@@ -164,8 +164,8 @@ export function ProviderListContent({
 				</div>
 
 				{providerSearchOpen ? (
-					<div className={cn("mb-4", isPanel ? "max-w-none" : "max-w-[42rem]")}>
-						<div className="flex h-9 items-center gap-2 rounded border bg-background px-3">
+					<div className={cn("mb-4", isPanel ? "max-w-none" : "max-w-[52rem]")}>
+						<div className="flex h-10 items-center gap-2 rounded-lg border bg-card/80 px-3 shadow-sm">
 							<Search className="size-4 shrink-0 text-muted-foreground" />
 							<Input
 								aria-label="Search model providers"
@@ -182,7 +182,7 @@ export function ProviderListContent({
 				<div
 					className={cn(
 						"overflow-hidden",
-						isPanel ? "max-w-none" : "max-w-[42rem]",
+						isPanel ? "max-w-none" : "max-w-[52rem] rounded-lg atcli-panel",
 					)}
 				>
 					{filteredProviders.length === 0 ? (
@@ -193,7 +193,7 @@ export function ProviderListContent({
 					{filteredProviders.map((prov) => (
 						<div
 							className={cn(
-								"flex min-h-11 items-center gap-4 border-b px-2 py-2 transition-colors hover:bg-accent/30",
+								"flex min-h-13 items-center gap-4 border-b border-border/70 px-4 py-3 transition-colors hover:bg-accent/35",
 								selectedProviderId === prov.id && "bg-accent/45",
 							)}
 							key={prov.id}
@@ -339,12 +339,12 @@ export function ProviderDetailContent({
 		<ScrollArea className="h-full">
 			<div
 				className={cn(
-					"py-10 max-[720px]:px-4 max-[720px]:py-5",
-					isPanel ? "px-6" : "px-18 max-[1200px]:px-8",
+					"py-8 max-[720px]:px-4 max-[720px]:py-5",
+					isPanel ? "px-6" : "mx-auto max-w-[1180px] px-6",
 				)}
 			>
 				{/* Back + title */}
-				<div className="mb-8 flex items-center gap-3">
+				<div className="mb-6 flex items-center gap-3 rounded-lg atcli-glass px-4 py-3">
 					<Button
 						aria-label={
 							isPanel ? "Close provider details" : "Back to providers"
@@ -381,7 +381,7 @@ export function ProviderDetailContent({
 								const isShown = shownSecrets[field.path] ?? false;
 								return (
 									<div
-										className="grid min-h-18 grid-cols-[minmax(12rem,0.55fr)_minmax(16rem,0.45fr)] items-center gap-6 border-b py-4 max-[900px]:grid-cols-1 max-[900px]:gap-3"
+										className="grid min-h-18 grid-cols-[minmax(12rem,0.55fr)_minmax(16rem,0.45fr)] items-center gap-6 border-b border-border/70 py-4 max-[900px]:grid-cols-1 max-[900px]:gap-3"
 										key={field.path}
 									>
 										<header>
@@ -518,7 +518,7 @@ export function ProviderDetailContent({
 				{/* Models section */}
 				<section
 					className={cn(
-						"overflow-hidden rounded-lg border",
+						"overflow-hidden rounded-lg atcli-panel",
 						isPanel ? "max-w-none" : "max-w-[46rem]",
 					)}
 				>

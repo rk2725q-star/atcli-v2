@@ -17,11 +17,11 @@ export function PageFrame({
 		<ScrollArea className="h-full">
 			<div
 				className={cn(
-					"px-18 py-10 max-[1200px]:px-8 max-[720px]:px-4 max-[720px]:py-5",
+					"mx-auto w-full max-w-[1180px] px-6 py-8 max-[720px]:px-4 max-[720px]:py-5",
 					className,
 				)}
 			>
-				<div className={cn("max-w-[86rem]", contentClassName)}>{children}</div>
+				<div className={cn("max-w-none", contentClassName)}>{children}</div>
 			</div>
 		</ScrollArea>
 	);
@@ -47,14 +47,14 @@ export function PageHeader({
 	return (
 		<section
 			className={cn(
-				"mb-8 flex items-start justify-between gap-6 max-[860px]:flex-col max-[860px]:items-stretch",
+				"mb-8 flex items-start justify-between gap-6 rounded-lg atcli-glass px-5 py-4 max-[860px]:flex-col max-[860px]:items-stretch",
 				className,
 			)}
 		>
 			<div className="min-w-0">
 				<div className="flex min-w-0 items-center gap-3">
 					{Icon ? <Icon className="size-8 shrink-0 text-primary" /> : null}
-					<h1 className="truncate text-[32px] font-semibold leading-[1.15] tracking-normal text-foreground">
+					<h1 className="truncate text-[32px] font-semibold leading-[1.1] tracking-normal text-foreground">
 						{title}
 					</h1>
 					{meta}
@@ -83,7 +83,7 @@ export function PageEmptyState({ children, className }: PageEmptyStateProps) {
 	return (
 		<div
 			className={cn(
-				"rounded-lg border border-dashed border-border bg-card px-5 py-4 text-sm leading-6 text-muted-foreground",
+				"rounded-lg border border-dashed border-border bg-card/80 px-5 py-4 text-sm leading-6 text-muted-foreground shadow-sm",
 				className,
 			)}
 		>

@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-	title: "Cline",
-	description: "Build software with Cline.",
+	title: "ATCLI",
+	description: "A premium command center for agentic software work.",
 	icons: {
 		icon: [
 			{

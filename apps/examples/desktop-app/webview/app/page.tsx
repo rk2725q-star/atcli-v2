@@ -220,7 +220,7 @@ export default function Home() {
 
 	return (
 		<SidebarProvider>
-			<div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+			<div className="atcli-shell flex h-screen w-full overflow-hidden text-foreground">
 				<Sidebar className="border-r border-sidebar-border" collapsible="icon">
 					<AgentSidebar
 						activeSessionId={activeHistorySessionId}
@@ -239,8 +239,8 @@ export default function Home() {
 					/>
 					<SidebarRail />
 				</Sidebar>
-				<SidebarInset className="min-h-0 min-w-0 overflow-hidden">
-					<SidebarTrigger className="absolute left-3 top-3 z-40 md:hidden" />
+				<SidebarInset className="min-h-0 min-w-0 overflow-hidden bg-transparent">
+					<SidebarTrigger className="absolute left-3 top-3 z-40 bg-card/90 shadow-sm backdrop-blur md:hidden" />
 					{view === "sessions" ? (
 						<SessionsView
 							activeSessionId={activeHistorySessionId}
@@ -266,7 +266,7 @@ export default function Home() {
 						</div>
 					) : null}
 					{view === "settings" ? (
-						<div className="absolute inset-0 z-30 bg-background text-foreground">
+						<div className="absolute inset-0 z-30 bg-background/80 text-foreground backdrop-blur-sm">
 							<SettingsView
 								onNavigateSection={setSettingsSection}
 								section={settingsSection}
@@ -942,7 +942,7 @@ function ChatThreadPane({
 
 	if (!isAppReady) {
 		return (
-			<div className="flex h-full flex-1 flex-col items-center justify-center gap-3 bg-background text-foreground">
+			<div className="atcli-shell flex h-full flex-1 flex-col items-center justify-center gap-3 text-foreground">
 				<div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
 				<p className="text-sm text-muted-foreground">
 					{chatTransportState === "unavailable"
@@ -1049,11 +1049,11 @@ function ChatThreadPane({
 				className={
 					isWelcomeState
 						? "grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-hidden"
-						: "grid h-full min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
+						: "grid h-full min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden px-4 pb-4 max-md:px-2 max-md:pb-2"
 				}
 			>
 				{!isWelcomeState ? (
-					<div className="z-20 border-b border-border/70 bg-background/85 backdrop-blur-sm">
+					<div className="z-20 mx-auto mt-4 w-full max-w-[1180px] overflow-hidden rounded-lg atcli-glass max-md:mt-2">
 						<AgentHeader
 							canEditTitle={Boolean(activeSessionForTitle)}
 							canDeleteSession={Boolean(activeSessionToDelete)}
@@ -1074,39 +1074,80 @@ function ChatThreadPane({
 						/>
 					</div>
 				) : null}
-				<WelcomeScreen
-					active={isWelcomeState}
-					body={
-						showDiffView ? (
-							<DiffView
-								fileDiffs={fileDiffs}
-								onClose={() => setShowDiffView(false)}
-							/>
-						) : (
-							<ChatMessages
-								onAnswerAskQuestion={handleAnswerAskQuestion}
-								onApproveToolApproval={handleApproveToolApproval}
-								onRejectToolApproval={handleRejectToolApproval}
-								chatTransportState={chatTransportState}
-								error={displayedError}
-								messages={displayedMessages}
-								onRestoreCheckpoint={(runCount) =>
-									void restoreCheckpoint(runCount)
-								}
-								onForkSession={handleForkSession}
-								pendingToolApprovals={pendingToolApprovals}
-								pendingAskQuestions={pendingAskQuestions}
-								sessionId={displayedSessionId}
-								streamingMessageId={activeAssistantMessageId}
-								isSessionSwitching={displayedIsSwitching}
-								status={displayedStatus}
-							/>
-						)
+				<div
+					className={
+						isWelcomeState
+							? "min-h-0"
+							: "mx-auto mt-4 min-h-0 w-full max-w-[1180px] overflow-hidden rounded-lg atcli-panel"
 					}
-					composer={composer}
-					onStartChat={setPromptInput}
-					quickActions={[]}
-				/>
+				>
+					<WelcomeScreen
+						active={isWelcomeState}
+						body={
+							showDiffView ? (
+								<DiffView
+									fileDiffs={fileDiffs}
+									onClose={() => setShowDiffView(false)}
+								/>
+							) : (
+								<ChatMessages
+									onAnswerAskQuestion={handleAnswerAskQuestion}
+									onApproveToolApproval={handleApproveToolApproval}
+									onRejectToolApproval={handleRejectToolApproval}
+									chatTransportState={chatTransportState}
+									error={displayedError}
+									messages={displayedMessages}
+									onRestoreCheckpoint={(runCount) =>
+										void restoreCheckpoint(runCount)
+									}
+									onForkSession={handleForkSession}
+									pendingToolApprovals={pendingToolApprovals}
+									pendingAskQuestions={pendingAskQuestions}
+									sessionId={displayedSessionId}
+									streamingMessageId={activeAssistantMessageId}
+									isSessionSwitching={displayedIsSwitching}
+									status={displayedStatus}
+								/>
+							)
+						}
+						composer={composer}
+						onStartChat={setPromptInput}
+						quickActions={[
+							{
+								id: "ship-feature",
+								label: "Ship a feature",
+								description:
+									"Plan, edit, test, and summarize a focused change.",
+								prompt:
+									"Help me ship the next feature. Inspect the project, propose the safest implementation path, make the change, and verify it.",
+							},
+							{
+								id: "fix-failure",
+								label: "Fix a failure",
+								description:
+									"Trace errors from logs, tests, or broken UI behavior.",
+								prompt:
+									"Find the root cause of the current failure, implement the fix, and run the relevant checks.",
+							},
+							{
+								id: "review-work",
+								label: "Review work",
+								description:
+									"Audit local changes for regressions and missing tests.",
+								prompt:
+									"Review the current changes with a code-review mindset and call out bugs, regressions, or missing tests.",
+							},
+							{
+								id: "map-codebase",
+								label: "Map the codebase",
+								description:
+									"Explain structure, feature entry points, and safe next moves.",
+								prompt:
+									"Map this codebase for me. Identify the main modules, important commands, and how to make changes safely.",
+							},
+						]}
+					/>
+				</div>
 			</div>
 			<AlertDialog
 				open={deleteConfirmOpen}

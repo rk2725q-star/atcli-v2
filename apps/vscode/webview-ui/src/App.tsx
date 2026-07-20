@@ -1,4 +1,4 @@
-import type { Boolean, EmptyRequest } from "@shared/proto/cline/common"
+import type { EmptyRequest, Boolean as ProtobufBoolean } from "@shared/proto/cline/common"
 import { useCallback, useEffect } from "react"
 import AccountView from "./components/account/AccountView"
 import ChatView from "./components/chat/ChatView"
@@ -45,7 +45,7 @@ const AppContent = () => {
 	const showUpdateAnnouncementModal = useCallback(() => {
 		setShowAnnouncement(true)
 		UiServiceClient.onDidShowAnnouncement({} as EmptyRequest)
-			.then((response: Boolean) => {
+			.then((response: ProtobufBoolean) => {
 				setShouldShowAnnouncement(response.value)
 			})
 			.catch((error) => {

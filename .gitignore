@@ -92,3 +92,6 @@ apps/examples/desktop-app/webview/.next
 
 # Next.js generated type shim (churns between dev and build)
 apps/examples/desktop-app/webview/next-env.d.ts
+
+# Downloaded protoc compiler
+protoc_ext/

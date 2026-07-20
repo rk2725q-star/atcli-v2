@@ -97,11 +97,7 @@ function buildCompatibleEffortOptions(options: {
 		return {};
 	}
 	return {
-		effort,
 		reasoningEffort: effort,
-		...(options.usesAnthropicReasoningRoute
-			? {}
-			: { reasoningSummary: "auto" }),
 	};
 }
 

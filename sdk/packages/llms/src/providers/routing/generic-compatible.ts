@@ -69,7 +69,7 @@ function buildCompatibleThinkingOptions(options: {
 	) {
 		return {};
 	}
-	return { thinking: { type: "adaptive" } };
+	return { thinking: { type: "enabled" } };
 }
 
 function buildCompatibleEffortOptions(options: {

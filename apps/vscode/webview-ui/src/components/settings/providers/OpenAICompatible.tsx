@@ -106,7 +106,7 @@ export const OpenAICompatibleProvider = ({
 			return
 		}
 		selectedModelOverridesRef.current = { modelId: selectedModelId, overrides: selectedModelOverrides }
-	}, [committedSelection?.overrides, selectedModelId])
+	}, [selectedModelId, selectedModelOverrides])
 
 	const commitOpenAiSelection = useCallback(
 		(modelId: string, overrides?: ProviderModelOverrides) => {
@@ -341,7 +341,18 @@ export const OpenAICompatibleProvider = ({
 							setIsCustomOpenAiModelEntryVisible(false)
 							handleOpenAiModelSelection(modelId)
 						}}
-						style={{ width: "100%" }}
+						style={{
+							width: "100%",
+							padding: "6px 8px",
+							borderRadius: 4,
+							border: "1px solid var(--vscode-input-border, #555)",
+							background: "var(--vscode-input-background, #1e1e1e)",
+							color: "var(--vscode-input-foreground, #cccccc)",
+							fontSize: 13,
+							outline: "none",
+							cursor: "pointer",
+							appearance: "auto",
+						}}
 						value={selectedModelId && availableOpenAiModels.includes(selectedModelId) ? selectedModelId : ""}>
 						{selectedModelId && !availableOpenAiModels.includes(selectedModelId) && (
 							<option value="">{selectedModelId} (not in current list)</option>
@@ -416,8 +427,8 @@ export const OpenAICompatibleProvider = ({
 						</div>
 
 						<div>
-							{headerEntries.map(([key, value], index) => (
-								<div key={index} style={{ display: "flex", gap: 5, marginTop: 5 }}>
+							{headerEntries.map(([key, value]) => (
+								<div key={key} style={{ display: "flex", gap: 5, marginTop: 5 }}>
 									<DebouncedTextField
 										disabled={remoteConfigSettings?.openAiHeaders !== undefined}
 										initialValue={key}
@@ -493,21 +504,28 @@ export const OpenAICompatibleProvider = ({
 
 			<VSCodeCheckbox
 				checked={apiConfiguration?.azureIdentity || false}
-				onChange={(e: any) => {
-					const isChecked = e.target.checked === true
+				onChange={(e) => {
+					const isChecked = (e as Event & { target: HTMLInputElement }).target.checked === true
 					return handleFieldChange("azureIdentity", isChecked)
 				}}>
 				Use Azure Identity Authentication
 			</VSCodeCheckbox>
 
-			<div
+			<button
+				type="button"
 				onClick={() => setModelConfigurationSelected((val) => !val)}
+				onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setModelConfigurationSelected((val) => !val) }}
 				style={{
+					background: "none",
+					border: "none",
+					padding: 0,
 					color: getAsVar(VSC_DESCRIPTION_FOREGROUND),
 					display: "flex",
 					margin: "10px 0",
 					cursor: "pointer",
 					alignItems: "center",
+					width: "100%",
+					font: "inherit",
 				}}>
 				<span
 					className={`codicon ${modelConfigurationSelected ? "codicon-chevron-down" : "codicon-chevron-right"}`}
@@ -522,19 +540,19 @@ export const OpenAICompatibleProvider = ({
 					}}>
 					Model Configuration
 				</span>
-			</div>
+			</button>
 
 			{modelConfigurationSelected && (
 				<>
 					<VSCodeCheckbox
 						checked={!!openAiModelInfo?.supportsImages}
-						onChange={(e: any) => updateModelOverride("supportsVision", e.target.checked === true)}>
+						onChange={(e) => updateModelOverride("supportsVision", (e as Event & { target: HTMLInputElement }).target.checked === true)}>
 						Supports Images
 					</VSCodeCheckbox>
 
 					<VSCodeCheckbox
 						checked={selectedModelOverrides.isR1FormatRequired ?? openAiModelInfo.apiFormat === ApiFormat.R1_CHAT}
-						onChange={(e: any) => updateModelOverride("isR1FormatRequired", e.target.checked === true)}>
+						onChange={(e) => updateModelOverride("isR1FormatRequired", (e as Event & { target: HTMLInputElement }).target.checked === true)}>
 						Enable R1 messages format
 					</VSCodeCheckbox>
 
@@ -611,6 +629,9 @@ export const OpenAICompatibleProvider = ({
 						currentMode={currentMode}
 						defaultEffort="none"
 						onEffortChange={(effort) => {
+							// Save effort to providers.json — the session factory will
+							// translate this to thinking: true/false only (never the
+							// unsupported 'reasoningEffort' param) for openai-compatible.
 							void write({
 								reasoning: {
 									enabled: effort !== "none",

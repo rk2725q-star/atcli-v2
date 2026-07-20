@@ -300,6 +300,7 @@ const PROVIDER_API_KEY_MAP: Record<string, keyof ApiConfiguration> = {
 	anthropic: "apiKey",
 	openrouter: "openRouterApiKey",
 	openai: "openAiApiKey",
+	"openai-compatible": "openAiApiKey",
 	"openai-native": "openAiNativeApiKey",
 	bedrock: "awsBedrockApiKey",
 	vertex: "geminiApiKey",
@@ -347,6 +348,7 @@ const PROVIDER_MODEL_ID_MAP: Record<string, { plan: keyof ApiConfiguration; act:
 	anthropic: { plan: "planModeApiModelId", act: "actModeApiModelId" },
 	openrouter: { plan: "planModeOpenRouterModelId", act: "actModeOpenRouterModelId" },
 	openai: { plan: "planModeOpenAiModelId", act: "actModeOpenAiModelId" },
+	"openai-compatible": { plan: "planModeOpenAiModelId", act: "actModeOpenAiModelId" },
 	"openai-native": { plan: "planModeApiModelId", act: "actModeApiModelId" },
 	"openai-codex": { plan: "planModeApiModelId", act: "actModeApiModelId" },
 	ollama: { plan: "planModeOllamaModelId", act: "actModeOllamaModelId" },
@@ -607,6 +609,7 @@ export function resolveBaseUrl(providerId: string, config: ApiConfiguration): st
 	const baseUrlMap: Record<string, keyof ApiConfiguration> = {
 		anthropic: "anthropicBaseUrl",
 		openai: "openAiBaseUrl",
+		"openai-compatible": "openAiBaseUrl",
 		ollama: "ollamaBaseUrl",
 		lmstudio: "lmStudioBaseUrl",
 		gemini: "geminiBaseUrl",
@@ -758,12 +761,41 @@ export async function buildSessionConfig(input: SessionConfigInput): Promise<Cor
 	const overriddenMaxTokens = committedRuntimeModel?.overrides?.maxTokens
 	const maxTokensPerTurn =
 		positiveFiniteNumber(overriddenMaxTokens) ??
-		(providerId === "openai" ? resolveOpenAiCompatibleMaxTokens(apiConfig, mode) : undefined)
+		(providerId === "openai" || providerId === "openai-compatible"
+			? resolveOpenAiCompatibleMaxTokens(apiConfig, mode)
+			: undefined)
 	const temperature = nonNegativeFiniteNumber(committedRuntimeModel?.overrides?.temperature)
-	const reasoningConfig =
-		providerId === "oca"
-			? (resolveOcaReasoningConfig(mode, apiConfig) ?? resolveProviderReasoningConfig(providerId))
-			: resolveProviderReasoningConfig(providerId)
+	// For openai-compatible providers (NVIDIA, etc.) convert the user's effort
+	// setting into thinking: true/false only. These endpoints don't support the
+	// proprietary 'reasoningEffort' / 'reasoningSummary' parameters and return
+	// validation errors when they are included. The thinking flag itself is
+	// safe: it simply enables/disables chain-of-thought on models that support it.
+	const reasoningConfig: SessionReasoningConfig = (() => {
+		if (providerId !== "openai-compatible") {
+			if (providerId === "oca") {
+				return resolveOcaReasoningConfig(mode, apiConfig) ?? resolveProviderReasoningConfig(providerId)
+			}
+			return resolveProviderReasoningConfig(providerId)
+		}
+		try {
+			const manager = getProviderSettingsManager(resolveDataDir())
+			const settings = manager.getProviderSettings("openai-compatible")
+			const effort = settings?.reasoning?.effort
+			const enabled = settings?.reasoning?.enabled
+			// effort=none or enabled=false → disable thinking
+			if (enabled === false) {
+				return { thinking: false }
+			}
+			// enabled=true or any explicit effort value → enable thinking
+			// (never pass reasoningEffort since NVIDIA doesn't support it)
+			if (enabled === true || effort !== undefined) {
+				return { thinking: true }
+			}
+		} catch {
+			// ignore
+		}
+		return {}
+	})()
 
 	// Build the system prompt using the shared prompt builder. Core still
 	// expects callers to provide a concrete systemPrompt, but the prompt builder

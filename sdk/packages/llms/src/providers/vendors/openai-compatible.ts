@@ -104,6 +104,130 @@ function createResponseErrorFetch(input: {
 	return responseErrorFetch;
 }
 
+function withNvidiaNimConfig(
+	input: FetchInput,
+	init: Parameters<typeof fetch>[1],
+): Parameters<typeof fetch>[1] {
+	if (!init || !init.body || typeof init.body !== "string") {
+		return init;
+	}
+
+	let url: URL;
+	try {
+		url = new URL(input instanceof Request ? input.url : input.toString());
+	} catch {
+		return init;
+	}
+
+	if (!url.hostname.includes("integrate.api.nvidia.com")) {
+		return init;
+	}
+
+	try {
+		const body = JSON.parse(init.body);
+		if (typeof body.model === "string" && body.model.includes("glm")) {
+			// NVIDIA NIM's GLM models expect chat_template_kwargs for thinking
+			const reasoningEffort = body.reasoning_effort;
+			body.chat_template_kwargs = {
+				enable_thinking: reasoningEffort ? reasoningEffort !== "none" : true,
+			};
+
+			// NVIDIA NIM throws a 500 error if "developer" role is used with chat_template_kwargs
+			if (Array.isArray(body.messages)) {
+				for (const msg of body.messages) {
+					if (msg.role === "developer") {
+						msg.role = "system";
+					}
+				}
+			}
+
+			return {
+				...init,
+				body: JSON.stringify(body),
+			};
+		}
+	} catch {
+		return init;
+	}
+
+	return init;
+}
+
+function createNvidiaNimFetch(
+	baseFetch: typeof fetch,
+): typeof fetch {
+	const nvidiaFetch = (async (input, init) => {
+		const modifiedInit = withNvidiaNimConfig(input, init);
+		const response = await baseFetch(input, modifiedInit);
+
+		let urlStr = "";
+		try {
+			urlStr = input instanceof Request ? input.url : input.toString();
+		} catch {}
+
+		if (
+			response.body &&
+			response.headers.get("content-type")?.includes("text/event-stream") &&
+			urlStr.includes("integrate.api.nvidia.com")
+		) {
+			let buffer = "";
+			const transformStream = new TransformStream({
+				transform(chunk: Uint8Array, controller) {
+					buffer += new TextDecoder().decode(chunk, { stream: true });
+					const lines = buffer.split("\n");
+					buffer = lines.pop() || "";
+					for (const line of lines) {
+						if (line.startsWith("data: ") && line.trim() !== "data: [DONE]") {
+							try {
+								const jsonStr = line.slice(6);
+								const data = JSON.parse(jsonStr);
+								let modified = false;
+								if (data.choices && data.choices.length > 0) {
+									const delta = data.choices[0].delta;
+									if (delta) {
+										// If content is empty/missing and reasoning_content is present
+										if (!delta.content && delta.reasoning_content) {
+											delta.content = delta.reasoning_content;
+											delete delta.reasoning_content;
+											modified = true;
+										}
+									}
+								}
+								if (modified) {
+									controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(data)}\n`));
+									continue;
+								}
+							} catch {
+								// ignore parse errors, just pass through
+							}
+						}
+						controller.enqueue(new TextEncoder().encode(line + "\n"));
+					}
+				},
+				flush(controller) {
+					if (buffer) {
+						controller.enqueue(new TextEncoder().encode(buffer));
+					}
+				},
+			});
+			return new Response(response.body.pipeThrough(transformStream), {
+				status: response.status,
+				statusText: response.statusText,
+				headers: response.headers,
+			});
+		}
+
+		return response;
+	}) as typeof fetch;
+
+	const baseFetchWithPreconnect = baseFetch as FetchWithOptionalPreconnect;
+	(nvidiaFetch as FetchWithOptionalPreconnect).preconnect =
+		typeof baseFetchWithPreconnect.preconnect === "function"
+			? baseFetchWithPreconnect.preconnect.bind(baseFetch)
+			: () => undefined;
+	return nvidiaFetch;
+}
+
 export async function createOpenAICompatibleProviderModule(
 	config: GatewayResolvedProviderConfig,
 	context: GatewayProviderContext,
@@ -113,7 +237,8 @@ export async function createOpenAICompatibleProviderModule(
 	// authoritative error and is surfaced to the user as-is. This keeps
 	// `llms` unopinionated about which providers do or don't need a key.
 	const apiKey = await resolveApiKey(config);
-	const fetch = createAzureApiVersionFetch(config);
+	let fetch = createAzureApiVersionFetch(config) ?? config.fetch ?? globalThis.fetch;
+	fetch = createNvidiaNimFetch(fetch);
 	const onResponseError = readResponseErrorHandler(config);
 	const providerFetch = onResponseError
 		? createResponseErrorFetch({

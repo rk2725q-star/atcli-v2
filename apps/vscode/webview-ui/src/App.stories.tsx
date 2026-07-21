@@ -166,7 +166,7 @@ const createSayToolMessage = (
 	...overrides,
 })
 
-const createApiReqMessage = (minutesAgo: number, request: string, metrics: any = {}) =>
+const createApiReqMessage = (minutesAgo: number, request: string, metrics: Record<string, unknown> = {}) =>
 	createMessage(
 		minutesAgo,
 		"say",
@@ -244,7 +244,7 @@ const STORYBOOK_OPENROUTER_MODELS: Record<string, ModelInfo> = {
 	},
 }
 
-const createMockState = (overrides: any = {}) => ({
+const createMockState = (overrides: Record<string, unknown> = {}) => ({
 	...useExtensionState(),
 	useAutoCondense: true,
 	version: "0.0.1-stories",
@@ -261,8 +261,8 @@ const createMockState = (overrides: any = {}) => ({
 })
 
 const createStoryDecorator =
-	(stateOverrides: any = {}) =>
-	(Story: any) => {
+	(stateOverrides: Record<string, unknown> = {}) =>
+	(Story: React.ComponentType) => {
 		const mockState = useMemo(() => createMockState(stateOverrides), [])
 		return (
 			<ExtensionStateProviderMock value={mockState}>

@@ -41,6 +41,9 @@
 			"react-dom": [
 				"./node_modules/@types/react-dom"
 			],
+			"@heroui/*": [
+				"./node_modules/@heroui/*"
+			],
 			"@/*": [
 				"./src/*"
 			],

@@ -1,11 +1,11 @@
 import { StringArray } from "@shared/proto/cline/common"
-import { OpenAiModelsRequest } from "@shared/proto/cline/models"
+import type { OpenAiModelsRequest } from "@shared/proto/cline/models"
 import type { AxiosRequestConfig } from "axios"
 import axios from "axios"
 import { parseProviderId } from "@/sdk/model-catalog/provider-id"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
-import { Controller } from ".."
+import type { Controller } from ".."
 
 /**
  * Fetches available models from the OpenAI API
@@ -16,8 +16,8 @@ import { Controller } from ".."
 export async function refreshOpenAiModels(controller: Controller, request: OpenAiModelsRequest): Promise<StringArray> {
 	try {
 		const providerConfig = controller.getProviderConfigStore().read(parseProviderId(request.providerId || "openai"))
-		const baseUrl = providerConfig.baseUrl
-		const apiKey = providerConfig.apiKey
+		const baseUrl = (request.baseUrl || providerConfig.baseUrl || "").trim().replace(/\/+$/, "")
+		const apiKey = (request.apiKey || providerConfig.apiKey || "").trim()
 
 		if (!baseUrl) {
 			return StringArray.create({ values: [] })
@@ -35,7 +35,7 @@ export async function refreshOpenAiModels(controller: Controller, request: OpenA
 		}
 
 		const response = await axios.get(`${baseUrl}/models`, { ...config, ...getAxiosSettings() })
-		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
+		const modelsArray = response.data?.data?.map((model: { id: string }) => model.id) || []
 		const models = [...new Set<string>(modelsArray)]
 
 		return StringArray.create({ values: models })

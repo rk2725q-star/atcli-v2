@@ -119,28 +119,67 @@ function withNvidiaNimConfig(
 		return init;
 	}
 
-	if (!url.hostname.includes("integrate.api.nvidia.com")) {
+	if (!url.hostname.includes("nvidia.com")) {
 		return init;
 	}
 
 	try {
 		const body = JSON.parse(init.body);
+		let modified = false;
+
+		// Convert developer role to system role for all NVIDIA NIM models
+		if (Array.isArray(body.messages)) {
+			for (const msg of body.messages) {
+				if (msg.role === "developer") {
+					msg.role = "system";
+					modified = true;
+				}
+			}
+		}
+
+		// Normalize short model IDs to vendor-prefixed format for NVIDIA NIM
+		if (typeof body.model === "string" && !body.model.includes("/")) {
+			const rawModel = body.model.toLowerCase().trim();
+			if (rawModel.includes("llama-3.3-70b")) {
+				body.model = "meta/llama-3.3-70b-instruct";
+				modified = true;
+			} else if (rawModel.includes("llama-3.1-405b")) {
+				body.model = "meta/llama-3.1-405b-instruct";
+				modified = true;
+			} else if (rawModel.includes("llama-3.1-70b")) {
+				body.model = "meta/llama-3.1-70b-instruct";
+				modified = true;
+			} else if (rawModel.includes("llama-3.1-8b")) {
+				body.model = "meta/llama-3.1-8b-instruct";
+				modified = true;
+			} else if (rawModel.includes("deepseek-r1")) {
+				body.model = "deepseek-ai/deepseek-r1";
+				modified = true;
+			} else if (rawModel.includes("deepseek-v3")) {
+				body.model = "deepseek-ai/deepseek-v3";
+				modified = true;
+			} else if (rawModel.includes("nemotron")) {
+				body.model = "nvidia/llama-3.1-nemotron-70b-instruct";
+				modified = true;
+			} else if (rawModel.includes("qwen")) {
+				body.model = "qwen/qwen2.5-coder-32b-instruct";
+				modified = true;
+			} else if (rawModel.includes("mistral")) {
+				body.model = "mistralai/mistral-large-2411";
+				modified = true;
+			}
+		}
+
 		if (typeof body.model === "string" && body.model.includes("glm")) {
 			// NVIDIA NIM's GLM models expect chat_template_kwargs for thinking
 			const reasoningEffort = body.reasoning_effort;
 			body.chat_template_kwargs = {
 				enable_thinking: reasoningEffort ? reasoningEffort !== "none" : true,
 			};
+			modified = true;
+		}
 
-			// NVIDIA NIM throws a 500 error if "developer" role is used with chat_template_kwargs
-			if (Array.isArray(body.messages)) {
-				for (const msg of body.messages) {
-					if (msg.role === "developer") {
-						msg.role = "system";
-					}
-				}
-			}
-
+		if (modified) {
 			return {
 				...init,
 				body: JSON.stringify(body),
@@ -201,7 +240,7 @@ function createNvidiaNimFetch(
 								// ignore parse errors, just pass through
 							}
 						}
-						controller.enqueue(new TextEncoder().encode(line + "\n"));
+						controller.enqueue(new TextEncoder().encode(`${line}\n`));
 					}
 				},
 				flush(controller) {

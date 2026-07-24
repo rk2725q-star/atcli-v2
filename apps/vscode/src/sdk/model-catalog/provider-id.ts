@@ -59,6 +59,7 @@ const KNOWN_API_PROVIDERS = {
 	xiaomi: true,
 	"tencent-tokenhub": true,
 	"cline-pass": true,
+	atcli: true,
 } satisfies Record<ApiProvider, true>
 
 const normalizeProviderId = (raw: string): string => raw.trim().toLowerCase()

@@ -1,4 +1,4 @@
-import { ApiFormat } from "./proto/cline/models"
+import type { ApiFormat } from "./proto/cline/models"
 import type { ApiHandlerSettings } from "./storage/state-keys"
 
 export type ApiProvider =
@@ -50,12 +50,13 @@ export type ApiProvider =
 	| "wandb"
 	| "xiaomi"
 	| "tencent-tokenhub"
+	| "atcli"
 
 export const DEFAULT_API_PROVIDER = "openrouter" as ApiProvider
 
 export interface ApiHandlerOptions extends Partial<ApiHandlerSettings> {
 	ulid?: string // Used to identify the task in API requests
-	onRetryAttempt?: (attempt: number, maxRetries: number, delay: number, error: any) => void // Callback function
+	onRetryAttempt?: (attempt: number, maxRetries: number, delay: number, error: unknown) => void // Callback function
 }
 
 export type ApiConfiguration = ApiHandlerOptions

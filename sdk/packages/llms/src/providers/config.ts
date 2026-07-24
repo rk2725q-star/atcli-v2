@@ -253,6 +253,8 @@ export interface ProviderOptions {
 	openRouterProviderSorting?: string;
 	/** Runtime model catalog refresh configuration */
 	modelCatalog?: ModelCatalogConfig;
+	/** Generic provider-specific runtime options */
+	options?: Record<string, unknown>;
 }
 
 /**

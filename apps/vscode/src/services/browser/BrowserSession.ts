@@ -177,7 +177,7 @@ export class BrowserSession {
 					telemetryService.captureBrowserToolStart(this.ulid, browserSettings)
 				}
 
-				return
+				return this.page
 			} catch (error) {
 				Logger.error("Failed to launch remote browser, falling back to local mode:", error)
 
@@ -207,6 +207,16 @@ export class BrowserSession {
 		if (this.ulid) {
 			telemetryService.captureBrowserToolStart(this.ulid, browserSettings)
 		}
+
+		return this.page
+	}
+
+	/**
+	 * Get the currently active page, if any.
+	 * Used by the atcli browser bridge to share an existing browser session.
+	 */
+	getActivePage() {
+		return this.page ?? null
 	}
 
 	async launchLocalBrowser() {

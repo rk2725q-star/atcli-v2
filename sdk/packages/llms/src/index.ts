@@ -99,4 +99,13 @@ export {
 	type ResolveProviderRequestHeadersInput,
 	resolveProviderRequestHeaders,
 } from "./providers/request-headers";
+export type {
+	AtcliBrowserSiteConfig,
+	AtcliSiteId,
+	BrowserSessionBridge,
+} from "./providers/vendors/atcli-browser";
+export {
+	ATCLI_SITE_ADAPTERS,
+	ATCLI_SITE_MODELS,
+} from "./providers/vendors/atcli-browser";
 export { disposeLangfuseTelemetry } from "./services/langfuse-telemetry";

@@ -36,6 +36,7 @@ function buildGatewayProviderOptions(
 	config: ProviderConfig,
 ): Record<string, unknown> | undefined {
 	const options: Record<string, unknown> = {
+		...(config.options ?? {}),
 		region: config.region,
 		apiLine: config.apiLine,
 		openRouterProviderSorting: config.openRouterProviderSorting,

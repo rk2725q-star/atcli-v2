@@ -192,9 +192,7 @@ function withNvidiaNimConfig(
 	return init;
 }
 
-function createNvidiaNimFetch(
-	baseFetch: typeof fetch,
-): typeof fetch {
+function createNvidiaNimFetch(baseFetch: typeof fetch): typeof fetch {
 	const nvidiaFetch = (async (input, init) => {
 		const modifiedInit = withNvidiaNimConfig(input, init);
 		const response = await baseFetch(input, modifiedInit);
@@ -233,7 +231,9 @@ function createNvidiaNimFetch(
 									}
 								}
 								if (modified) {
-									controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(data)}\n`));
+									controller.enqueue(
+										new TextEncoder().encode(`data: ${JSON.stringify(data)}\n`),
+									);
 									continue;
 								}
 							} catch {
@@ -276,7 +276,8 @@ export async function createOpenAICompatibleProviderModule(
 	// authoritative error and is surfaced to the user as-is. This keeps
 	// `llms` unopinionated about which providers do or don't need a key.
 	const apiKey = await resolveApiKey(config);
-	let fetch = createAzureApiVersionFetch(config) ?? config.fetch ?? globalThis.fetch;
+	let fetch =
+		createAzureApiVersionFetch(config) ?? config.fetch ?? globalThis.fetch;
 	fetch = createNvidiaNimFetch(fetch);
 	const onResponseError = readResponseErrorHandler(config);
 	const providerFetch = onResponseError

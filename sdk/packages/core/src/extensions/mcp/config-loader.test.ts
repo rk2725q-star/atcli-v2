@@ -16,13 +16,13 @@ import {
 	hasMcpSettingsFile,
 	listMcpServerOAuthStatuses,
 	loadMcpSettingsFile,
+	McpSettingsMutatorPurityError,
 	registerMcpServersFromSettingsFile,
 	resolveMcpServerRegistrations,
 	setMcpServerDisabled,
 	updateMcpServerOAuthState,
 	updateMcpSettingsFile,
 	updateMcpSettingsFileSync,
-	McpSettingsMutatorPurityError,
 } from "./config-loader";
 
 describe("mcp config loader", () => {

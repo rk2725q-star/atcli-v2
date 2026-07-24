@@ -76,7 +76,8 @@ export type ProviderFamily =
 	| "opencode"
 	| "dify"
 	| "ollama"
-	| "sap-ai-core";
+	| "sap-ai-core"
+	| "atcli-browser";
 
 export interface BuiltinSpec {
 	id: string;
@@ -465,6 +466,8 @@ function inferProtocol(spec: BuiltinSpec): ProviderProtocol {
 		case "google":
 		case "vertex":
 			return "gemini";
+		case "atcli-browser":
+			return "openai-chat";
 		default:
 			return "openai-chat";
 	}
@@ -493,6 +496,8 @@ function inferClient(spec: BuiltinSpec): ProviderClient {
 		case "ollama":
 		case "sap-ai-core":
 			return "ai-sdk-community";
+		case "atcli-browser":
+			return "atcli-browser" as unknown as ProviderClient;
 		default:
 			return "openai-compatible";
 	}
@@ -1157,6 +1162,124 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		metadata: ANTHROPIC_ROUTING_METADATA,
 	},
 	...OPENAI_COMPATIBLE_SPECS,
+	// -------------------------------------------------------------------------
+	// atcli Browser Provider
+	// -------------------------------------------------------------------------
+	{
+		id: "atcli",
+		name: "atcli (Browser AI)",
+		description:
+			"Use AI websites through browser automation — no API key needed. " +
+			"Supports ChatGPT, DeepSeek, Gemini, Kimi, and Qwen.",
+		family: "atcli-browser",
+		popular: 3,
+		capabilities: ["tools"],
+		env: ["node"],
+		defaultModelId: "deepseek-chat",
+		modelsFactory: () => ({
+			// DeepSeek site models
+			"deepseek-chat": {
+				id: "deepseek-chat",
+				name: "DeepSeek Chat (Browser)",
+				description: "DeepSeek Chat via browser automation",
+				capabilities: ["streaming", "tools"],
+				contextWindow: 128000,
+			},
+			"deepseek-r2": {
+				id: "deepseek-r2",
+				name: "DeepSeek R2 (Browser)",
+				description: "DeepSeek R2 reasoning model via browser",
+				capabilities: ["streaming", "tools", "reasoning"],
+				contextWindow: 128000,
+			},
+			// ChatGPT site models
+			"gpt-4o-browser": {
+				id: "gpt-4o-browser",
+				name: "GPT-4o (Browser)",
+				description: "ChatGPT GPT-4o via browser automation",
+				capabilities: ["streaming", "tools", "images"],
+				contextWindow: 128000,
+			},
+			"o3-browser": {
+				id: "o3-browser",
+				name: "o3 (Browser)",
+				description: "ChatGPT o3 reasoning model via browser",
+				capabilities: ["streaming", "tools", "reasoning"],
+				contextWindow: 200000,
+			},
+			"gpt-4.1-browser": {
+				id: "gpt-4.1-browser",
+				name: "GPT-4.1 (Browser)",
+				description: "ChatGPT GPT-4.1 via browser automation",
+				capabilities: ["streaming", "tools"],
+				contextWindow: 1000000,
+			},
+			// Gemini site models
+			"gemini-2.5-pro-browser": {
+				id: "gemini-2.5-pro-browser",
+				name: "Gemini 2.5 Pro (Browser)",
+				description: "Google Gemini 2.5 Pro via browser automation",
+				capabilities: ["streaming", "tools", "reasoning"],
+				contextWindow: 1000000,
+			},
+			"gemini-2.0-flash-browser": {
+				id: "gemini-2.0-flash-browser",
+				name: "Gemini 2.0 Flash (Browser)",
+				description: "Google Gemini 2.0 Flash via browser automation",
+				capabilities: ["streaming", "tools"],
+				contextWindow: 1000000,
+			},
+			// Kimi site models
+			"kimi-k2-browser": {
+				id: "kimi-k2-browser",
+				name: "Kimi K2 (Browser)",
+				description: "Moonshot Kimi K2 via browser automation",
+				capabilities: ["streaming", "tools"],
+				contextWindow: 128000,
+			},
+			"kimi-k1.5-browser": {
+				id: "kimi-k1.5-browser",
+				name: "Kimi K1.5 (Browser)",
+				description: "Moonshot Kimi K1.5 via browser automation",
+				capabilities: ["streaming", "tools", "reasoning"],
+				contextWindow: 128000,
+			},
+			// Qwen site models
+			"qwen3-235b-browser": {
+				id: "qwen3-235b-browser",
+				name: "Qwen3 235B (Browser)",
+				description: "Alibaba Qwen3 235B via browser automation",
+				capabilities: ["streaming", "tools", "reasoning"],
+				contextWindow: 32000,
+			},
+			"qwq-32b-browser": {
+				id: "qwq-32b-browser",
+				name: "QwQ 32B (Browser)",
+				description: "Alibaba QwQ 32B reasoning via browser",
+				capabilities: ["streaming", "tools", "reasoning"],
+				contextWindow: 32000,
+			},
+		}),
+		configFields: [
+			{
+				path: "atcliSite",
+				label: "AI Website",
+				type: "select",
+				description:
+					"Which AI website to use for browser-based inference. " +
+					"You must be logged in to the selected site in your browser.",
+				options: [
+					{ label: "DeepSeek (chat.deepseek.com)", value: "deepseek" },
+					{ label: "ChatGPT (chatgpt.com)", value: "chatgpt" },
+					{ label: "Gemini (gemini.google.com)", value: "gemini" },
+					{ label: "Kimi (kimi.moonshot.cn)", value: "kimi" },
+					{ label: "Qwen / Tongyi (tongyi.aliyun.com)", value: "qwen" },
+				],
+				defaultValue: "deepseek",
+				required: true,
+			},
+		],
+	},
 ];
 
 function getModels(spec: BuiltinSpec): Record<string, ModelInfo> {

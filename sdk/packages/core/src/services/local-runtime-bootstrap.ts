@@ -51,8 +51,8 @@ import { filterExtensionToolRegistrations } from "./global-settings";
 import { hasRuntimeHooks, mergeAgentExtensions } from "./session-data";
 import type { ProviderSettingsManager } from "./storage/provider-settings-manager";
 import { InMemoryWorkspaceManager } from "./workspace/workspace-manager";
-import { buildWorkspaceMetadataWithInfo } from "./workspace/workspace-manifest";
 import type { GitWorkspaceState } from "./workspace/workspace-manifest";
+import { buildWorkspaceMetadataWithInfo } from "./workspace/workspace-manifest";
 import { emitWorkspaceLifecycleTelemetry } from "./workspace/workspace-telemetry";
 
 function formatPluginFailure(failure: PluginInitializationFailure): string {

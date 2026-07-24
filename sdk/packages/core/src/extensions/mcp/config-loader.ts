@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
 	existsSync,
 	mkdirSync,
@@ -9,7 +10,6 @@ import {
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
-import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import type { BasicLogger } from "@cline/shared";

@@ -71,6 +71,10 @@ async function loadFamilyFactory(
 				const module = await import("./ai-sdk");
 				return module.createSapAiCoreProvider;
 			}
+			case "atcli-browser": {
+				const module = await import("./vendors/atcli-browser");
+				return module.createAtcliBrowserProvider;
+			}
 		}
 	})();
 

@@ -17,6 +17,7 @@ import { OPENROUTER_MODEL_PICKER_Z_INDEX } from "./OpenRouterModelPicker"
 import { AIhubmixProvider } from "./providers/AihubmixProvider"
 import { AnthropicProvider } from "./providers/AnthropicProvider"
 import { AskSageProvider } from "./providers/AskSageProvider"
+import { AtcliProvider } from "./providers/AtcliProvider"
 import { BasetenProvider } from "./providers/BasetenProvider"
 import { BedrockProvider } from "./providers/BedrockProvider"
 import { ClaudeCodeProvider } from "./providers/ClaudeCodeProvider"
@@ -388,6 +389,10 @@ const ApiOptions = ({
 
 			{apiConfiguration && selectedProvider === "hicap" && (
 				<HicapProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
+			)}
+
+			{apiConfiguration && selectedProvider === "atcli" && (
+				<AtcliProvider currentMode={currentMode} isPopup={isPopup} showModelOptions={showModelOptions} />
 			)}
 
 			{apiConfiguration && selectedProvider === "cline" && (

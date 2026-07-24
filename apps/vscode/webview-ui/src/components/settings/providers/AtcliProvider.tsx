@@ -1,84 +1,59 @@
 /**
- * AtcliProvider — Settings Panel for the atcli Browser AI Provider
+ * AtcliProvider — Settings Panel for the atcli Smart Router
  *
- * Shown in the Settings panel when the user selects "atcli (Browser AI)" as
- * their API provider. Unlike all other providers, this one requires NO API key.
+ * Shown in the Settings panel when the user selects "atcli Smart Router".
+ * Allows configuring multiple provider slots with API keys, base URLs, models,
+ * priorities, and the routing strategy.
  *
- * The UI allows the user to:
- * 1. Select which AI website to use (DeepSeek, ChatGPT, Gemini, Kimi, Qwen)
- * 2. Open the selected site in their browser to log in
- * 3. Select which model (per-site) to use
- * 4. See the status of their session
+ * Architecture inspired by OmniRoute — built natively in atcli.
  */
 
 import type { Mode } from "@shared/storage/types"
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers"
 
 const PROVIDER_ID = "atcli"
 
-interface AtcliSiteDefinition {
-	id: string
+export type RouterStrategy = "priority" | "round-robin" | "cost-optimized" | "random"
+
+export interface RouterSlot {
 	label: string
-	url: string
-	icon: string
-	models: Array<{ id: string; name: string }>
+	baseUrl: string
+	apiKey: string
+	modelId: string
+	priority?: number
+	costPerMToken?: number
 }
 
-const ATCLI_SITES: AtcliSiteDefinition[] = [
-	{
-		id: "deepseek",
-		label: "DeepSeek",
-		url: "https://chat.deepseek.com",
-		icon: "🔵",
-		models: [
-			{ id: "deepseek-chat", name: "DeepSeek Chat (Browser)" },
-			{ id: "deepseek-r2", name: "DeepSeek R2 (Browser)" },
-		],
-	},
-	{
-		id: "chatgpt",
-		label: "ChatGPT",
-		url: "https://chatgpt.com",
-		icon: "🟢",
-		models: [
-			{ id: "gpt-4o-browser", name: "GPT-4o (Browser)" },
-			{ id: "o3-browser", name: "o3 (Browser)" },
-			{ id: "gpt-4.1-browser", name: "GPT-4.1 (Browser)" },
-		],
-	},
-	{
-		id: "gemini",
-		label: "Gemini",
-		url: "https://gemini.google.com",
-		icon: "🔷",
-		models: [
-			{ id: "gemini-2.5-pro-browser", name: "Gemini 2.5 Pro (Browser)" },
-			{ id: "gemini-2.0-flash-browser", name: "Gemini 2.0 Flash (Browser)" },
-		],
-	},
-	{
-		id: "kimi",
-		label: "Kimi",
-		url: "https://kimi.moonshot.cn",
-		icon: "🌙",
-		models: [
-			{ id: "kimi-k2-browser", name: "Kimi K2 (Browser)" },
-			{ id: "kimi-k1.5-browser", name: "Kimi K1.5 (Browser)" },
-		],
-	},
-	{
-		id: "qwen",
-		label: "Qwen (Tongyi)",
-		url: "https://tongyi.aliyun.com/qianwen",
-		icon: "☁️",
-		models: [
-			{ id: "qwen3-235b-browser", name: "Qwen3 235B (Browser)" },
-			{ id: "qwq-32b-browser", name: "QwQ 32B (Browser)" },
-		],
-	},
+/** Well-known OpenAI-compatible providers with their base URLs */
+const KNOWN_PROVIDERS: Array<{ label: string; baseUrl: string; exampleModel: string }> = [
+	{ label: "DeepSeek", baseUrl: "https://api.deepseek.com/v1", exampleModel: "deepseek-chat" },
+	{ label: "Groq (free tier)", baseUrl: "https://api.groq.com/openai/v1", exampleModel: "llama-3.3-70b-versatile" },
+	{ label: "Cerebras (free tier)", baseUrl: "https://api.cerebras.ai/v1", exampleModel: "llama-3.3-70b" },
+	{ label: "SambaNova (free tier)", baseUrl: "https://api.sambanova.ai/v1", exampleModel: "Meta-Llama-3.3-70B-Instruct" },
+	{ label: "NVIDIA NIM (free tier)", baseUrl: "https://integrate.api.nvidia.com/v1", exampleModel: "meta/llama-3.3-70b-instruct" },
+	{ label: "Fireworks AI", baseUrl: "https://api.fireworks.ai/inference/v1", exampleModel: "accounts/fireworks/models/llama-v3p3-70b-instruct" },
+	{ label: "OpenAI", baseUrl: "https://api.openai.com/v1", exampleModel: "gpt-4o-mini" },
+	{ label: "Mistral", baseUrl: "https://api.mistral.ai/v1", exampleModel: "mistral-small-latest" },
+	{ label: "Custom / Local", baseUrl: "http://localhost:11434/v1", exampleModel: "llama3" },
 ]
+
+const STRATEGY_OPTIONS: Array<{ value: RouterStrategy; label: string; description: string }> = [
+	{ value: "priority", label: "Priority", description: "Use highest-priority healthy slot first" },
+	{ value: "round-robin", label: "Round-Robin", description: "Cycle through slots evenly" },
+	{ value: "cost-optimized", label: "Cost-Optimized", description: "Cheapest healthy slot first" },
+	{ value: "random", label: "Random", description: "Random healthy slot each request" },
+]
+
+const DEFAULT_SLOT: RouterSlot = {
+	label: "Slot 1",
+	baseUrl: "https://api.deepseek.com/v1",
+	apiKey: "",
+	modelId: "deepseek-chat",
+	priority: 1,
+	costPerMToken: 1.1,
+}
 
 interface AtcliProviderProps {
 	showModelOptions: boolean
@@ -86,61 +61,122 @@ interface AtcliProviderProps {
 	currentMode: Mode
 }
 
+const labelStyle: React.CSSProperties = {
+	fontSize: 11,
+	fontWeight: 600,
+	color: "var(--vscode-editor-foreground)",
+	textTransform: "uppercase",
+	letterSpacing: "0.05em",
+	marginBottom: 4,
+}
+
+const inputStyle: React.CSSProperties = {
+	padding: "5px 8px",
+	borderRadius: 4,
+	border: "1px solid var(--vscode-panel-border)",
+	background: "var(--vscode-input-background)",
+	color: "var(--vscode-input-foreground)",
+	fontSize: 12,
+	width: "100%",
+	boxSizing: "border-box",
+}
+
+const selectStyle: React.CSSProperties = {
+	...inputStyle,
+	cursor: "pointer",
+}
+
 export const AtcliProvider = ({ showModelOptions, currentMode }: AtcliProviderProps) => {
 	const { apiConfiguration } = useExtensionState()
 	const { handleModeFieldChange } = useApiConfigurationHandlers()
 
-	// Read current site and model from apiConfiguration
-	const atcliSite = (apiConfiguration as Record<string, unknown>)?.atcliSite as string | undefined
-	const selectedSiteId = atcliSite ?? "deepseek"
-	const selectedSite = ATCLI_SITES.find((s) => s.id === selectedSiteId) ?? ATCLI_SITES[0]!
+	const cfg = apiConfiguration as Record<string, unknown>
 
-	// Read selected model
-	const selectedModelId =
-		(currentMode === "plan"
-			? (apiConfiguration as Record<string, unknown>)?.planModeApiModelId
-			: (apiConfiguration as Record<string, unknown>)?.actModeApiModelId) as string | undefined
+	// Read current state from apiConfiguration
+	const strategy = (cfg?.smartRouterStrategy as RouterStrategy | undefined) ?? "priority"
+	const slots = (cfg?.smartRouterSlots as RouterSlot[] | undefined) ?? [{ ...DEFAULT_SLOT }]
 
-	const effectiveModelId = selectedModelId ?? selectedSite.models[0]?.id ?? "deepseek-chat"
+	// Local UI state for the slot being edited
+	const [expandedSlot, setExpandedSlot] = useState<number | null>(slots.length === 1 ? 0 : null)
 
-	const handleSiteChange = useCallback(
-		(siteId: string) => {
-			const site = ATCLI_SITES.find((s) => s.id === siteId)
-			if (!site) return
-
-			// Update the site setting + reset model to first model for that site
-			const firstModel = site.models[0]?.id ?? ""
-			handleModeFieldChange({ plan: "planModeApiModelId", act: "actModeApiModelId" }, firstModel as any, currentMode)
-
-			// Store the site selection in the config
-			// We use a custom field on apiConfiguration — the session factory reads this
-			// TODO: When a dedicated atcliSite field is added to ApiConfiguration, use that
-			void fetch("", { method: "NOOP" }).catch(() => {
-				// This is a stub — the actual state update goes through VS Code messaging
+	const saveChanges = useCallback(
+		(newStrategy: RouterStrategy, newSlots: RouterSlot[]) => {
+			// Persist to apiConfiguration via the handler
+			// We use planModeApiModelId as the "display" model (router picks at runtime)
+			handleModeFieldChange(
+				{ plan: "planModeApiModelId", act: "actModeApiModelId" },
+				"router/auto" as any,
+				currentMode,
+			)
+			// Store the router settings in the configuration object via a custom handler
+			// This is done by posting a message to the extension host
+			// The session factory reads cfg.smartRouterStrategy and cfg.smartRouterSlots
+			void (window as any).vscode?.postMessage?.({
+				type: "updateApiConfiguration",
+				values: {
+					smartRouterStrategy: newStrategy,
+					smartRouterSlots: newSlots,
+				},
 			})
 		},
 		[currentMode, handleModeFieldChange],
 	)
 
-	const handleModelChange = useCallback(
-		(modelId: string) => {
-			handleModeFieldChange({ plan: "planModeApiModelId", act: "actModeApiModelId" }, modelId as any, currentMode)
+	const updateStrategy = useCallback(
+		(s: RouterStrategy) => {
+			saveChanges(s, slots)
 		},
-		[currentMode, handleModeFieldChange],
+		[slots, saveChanges],
 	)
 
-	const handleOpenSite = useCallback(() => {
-		// VS Code will open this URL in the external browser
-		window.open(selectedSite.url, "_blank")
-	}, [selectedSite.url])
+	const updateSlot = useCallback(
+		(idx: number, patch: Partial<RouterSlot>) => {
+			const newSlots = slots.map((slot, i) => (i === idx ? { ...slot, ...patch } : slot))
+			saveChanges(strategy, newSlots)
+		},
+		[slots, strategy, saveChanges],
+	)
+
+	const addSlot = useCallback(() => {
+		const newSlots = [
+			...slots,
+			{
+				...DEFAULT_SLOT,
+				label: `Slot ${slots.length + 1}`,
+				priority: slots.length + 1,
+			},
+		]
+		saveChanges(strategy, newSlots)
+		setExpandedSlot(newSlots.length - 1)
+	}, [slots, strategy, saveChanges])
+
+	const removeSlot = useCallback(
+		(idx: number) => {
+			const newSlots = slots.filter((_, i) => i !== idx)
+			saveChanges(strategy, newSlots.length > 0 ? newSlots : [{ ...DEFAULT_SLOT }])
+			setExpandedSlot(null)
+		},
+		[slots, strategy, saveChanges],
+	)
+
+	const applyPreset = useCallback(
+		(idx: number, preset: (typeof KNOWN_PROVIDERS)[number]) => {
+			updateSlot(idx, {
+				baseUrl: preset.baseUrl,
+				modelId: preset.exampleModel,
+				label: preset.label,
+			})
+		},
+		[updateSlot],
+	)
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-			{/* Header info card */}
+			{/* Header */}
 			<div
 				style={{
-					background: "linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(147,51,234,0.15) 100%)",
-					border: "1px solid rgba(59,130,246,0.3)",
+					background: "linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(16,185,129,0.15) 100%)",
+					border: "1px solid rgba(99,102,241,0.3)",
 					borderRadius: 8,
 					padding: "12px 14px",
 					display: "flex",
@@ -152,12 +188,12 @@ export const AtcliProvider = ({ showModelOptions, currentMode }: AtcliProviderPr
 						display: "flex",
 						alignItems: "center",
 						gap: 8,
-						fontWeight: 600,
+						fontWeight: 700,
 						fontSize: 13,
 						color: "var(--vscode-editor-foreground)",
 					}}>
-					<span style={{ fontSize: 18 }}>🌐</span>
-					<span>atcli Browser AI — No API Key Required</span>
+					<span style={{ fontSize: 18 }}>⚡</span>
+					<span>atcli Smart Router — Multi-Provider AI</span>
 				</div>
 				<p
 					style={{
@@ -166,167 +202,290 @@ export const AtcliProvider = ({ showModelOptions, currentMode }: AtcliProviderPr
 						color: "var(--vscode-descriptionForeground)",
 						lineHeight: 1.5,
 					}}>
-					atcli controls your browser to use AI websites directly. Make sure you are logged in to the selected
-					site before starting a task.
+					Configure multiple AI providers with API keys. atcli automatically routes requests to the best
+					available slot with fallback on rate limits or errors. Works with any OpenAI-compatible endpoint.
 				</p>
 			</div>
 
-			{/* Site selector */}
-			<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-				<label
-					style={{
-						fontSize: 12,
-						fontWeight: 600,
-						color: "var(--vscode-editor-foreground)",
-						textTransform: "uppercase",
-						letterSpacing: "0.05em",
-					}}>
-					AI Website
-				</label>
-				<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-					{ATCLI_SITES.map((site) => (
+			{/* Routing Strategy */}
+			<div style={{ display: "flex", flexDirection: "column" }}>
+				<label style={labelStyle}>Routing Strategy</label>
+				<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+					{STRATEGY_OPTIONS.map((opt) => (
 						<button
-							key={site.id}
+							key={opt.value}
 							type="button"
-							id={`atcli-site-${site.id}`}
-							onClick={() => handleSiteChange(site.id)}
+							id={`atcli-strategy-${opt.value}`}
+							onClick={() => updateStrategy(opt.value)}
 							style={{
 								display: "flex",
-								alignItems: "center",
-								gap: 8,
-								padding: "8px 10px",
+								flexDirection: "column",
+								alignItems: "flex-start",
+								padding: "7px 10px",
 								borderRadius: 6,
 								border:
-									selectedSiteId === site.id
-										? "1px solid rgba(59,130,246,0.8)"
+									strategy === opt.value
+										? "1px solid rgba(99,102,241,0.7)"
 										: "1px solid var(--vscode-panel-border)",
 								background:
-									selectedSiteId === site.id
-										? "rgba(59,130,246,0.2)"
-										: "var(--vscode-input-background)",
+									strategy === opt.value ? "rgba(99,102,241,0.18)" : "var(--vscode-input-background)",
 								color: "var(--vscode-editor-foreground)",
 								cursor: "pointer",
 								fontSize: 12,
-								fontWeight: selectedSiteId === site.id ? 600 : 400,
+								fontWeight: strategy === opt.value ? 600 : 400,
 								transition: "all 0.15s ease",
 								textAlign: "left",
+								gap: 2,
 							}}>
-							<span style={{ fontSize: 16 }}>{site.icon}</span>
-							<span>{site.label}</span>
+							<span>{opt.label}</span>
+							<span style={{ fontSize: 10, color: "var(--vscode-descriptionForeground)", fontWeight: 400 }}>
+								{opt.description}
+							</span>
 						</button>
 					))}
 				</div>
-
-				{/* Open site button */}
-				<div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-					<button
-						type="button"
-						id="atcli-open-site"
-						onClick={handleOpenSite}
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: 6,
-							padding: "6px 12px",
-							borderRadius: 5,
-							border: "1px solid rgba(59,130,246,0.5)",
-							background: "rgba(59,130,246,0.1)",
-							color: "var(--vscode-button-foreground)",
-							cursor: "pointer",
-							fontSize: 11,
-							fontWeight: 500,
-						}}>
-						<span>🔗</span>
-						<span>Open {selectedSite.label} to Log In</span>
-					</button>
-					<span style={{ fontSize: 11, color: "var(--vscode-descriptionForeground)" }}>
-						{selectedSite.url}
-					</span>
-				</div>
 			</div>
 
-			{/* Model selector */}
-			{showModelOptions && (
-				<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-					<label
+			{/* Provider Slots */}
+			<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+				<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+					<label style={{ ...labelStyle, margin: 0 }}>Provider Slots ({slots.length})</label>
+					{slots.length < 5 && (
+						<button
+							type="button"
+							id="atcli-add-slot"
+							onClick={addSlot}
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: 4,
+								padding: "3px 10px",
+								borderRadius: 4,
+								border: "1px solid rgba(16,185,129,0.5)",
+								background: "rgba(16,185,129,0.1)",
+								color: "var(--vscode-editor-foreground)",
+								cursor: "pointer",
+								fontSize: 11,
+								fontWeight: 500,
+							}}>
+							<span>+</span>
+							<span>Add Slot</span>
+						</button>
+					)}
+				</div>
+
+				{slots.map((slot, idx) => (
+					<div
+						key={`slot-${idx}`}
 						style={{
-							fontSize: 12,
-							fontWeight: 600,
-							color: "var(--vscode-editor-foreground)",
-							textTransform: "uppercase",
-							letterSpacing: "0.05em",
-						}}>
-						Model
-					</label>
-					<select
-						id="atcli-model-select"
-						value={effectiveModelId}
-						onChange={(e) => handleModelChange(e.target.value)}
-						style={{
-							padding: "6px 8px",
-							borderRadius: 5,
 							border: "1px solid var(--vscode-panel-border)",
-							background: "var(--vscode-input-background)",
-							color: "var(--vscode-input-foreground)",
-							fontSize: 12,
-							width: "100%",
+							borderRadius: 8,
+							overflow: "hidden",
 						}}>
-						{selectedSite.models.map((model) => (
-							<option key={model.id} value={model.id}>
-								{model.name}
-							</option>
-						))}
-					</select>
-					<p style={{ margin: 0, fontSize: 11, color: "var(--vscode-descriptionForeground)" }}>
-						Model selection determines which model is active on the {selectedSite.label} site.
-					</p>
-				</div>
-			)}
+						{/* Slot header */}
+						<button
+							type="button"
+							id={`atcli-slot-${idx}-header`}
+							onClick={() => setExpandedSlot(expandedSlot === idx ? null : idx)}
+							style={{
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+								width: "100%",
+								padding: "8px 12px",
+								background:
+									expandedSlot === idx
+										? "rgba(99,102,241,0.1)"
+										: "var(--vscode-editor-background)",
+								border: "none",
+								color: "var(--vscode-editor-foreground)",
+								cursor: "pointer",
+								fontSize: 12,
+								fontWeight: 500,
+								textAlign: "left",
+							}}>
+							<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+								<span
+									style={{
+										width: 20,
+										height: 20,
+										borderRadius: "50%",
+										background: slot.apiKey ? "rgba(16,185,129,0.7)" : "rgba(234,179,8,0.5)",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										fontSize: 10,
+										fontWeight: 700,
+										flexShrink: 0,
+									}}>
+									{idx + 1}
+								</span>
+								<span>{slot.label || `Slot ${idx + 1}`}</span>
+								{!slot.apiKey && (
+									<span style={{ fontSize: 10, color: "rgba(234,179,8,0.9)" }}>⚠ No API key</span>
+								)}
+								{slot.apiKey && (
+									<span style={{ fontSize: 10, color: "rgba(16,185,129,0.9)" }}>✓ Ready</span>
+								)}
+							</div>
+							<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+								<span style={{ fontSize: 10, color: "var(--vscode-descriptionForeground)" }}>
+									{slot.modelId}
+								</span>
+								<span style={{ fontSize: 10, color: "var(--vscode-descriptionForeground)" }}>
+									{expandedSlot === idx ? "▲" : "▼"}
+								</span>
+							</div>
+						</button>
 
-			{/* How it works */}
-			<details style={{ marginTop: 4 }}>
-				<summary
-					style={{
-						fontSize: 11,
-						color: "var(--vscode-descriptionForeground)",
-						cursor: "pointer",
-						userSelect: "none",
-					}}>
-					How does this work?
-				</summary>
-				<div
-					style={{
-						marginTop: 8,
-						fontSize: 11,
-						color: "var(--vscode-descriptionForeground)",
-						lineHeight: 1.6,
-						paddingLeft: 12,
-						borderLeft: "2px solid var(--vscode-panel-border)",
-					}}>
-					<p style={{ margin: "0 0 6px" }}>
-						<strong>1.</strong> atcli opens {selectedSite.label} in your browser using Playwright
-						automation.
-					</p>
-					<p style={{ margin: "0 0 6px" }}>
-						<strong>2.</strong> A special system prompt is sent to teach the AI how to use atcli's tools
-						(read files, write code, run terminal commands, etc.).
-					</p>
-					<p style={{ margin: "0 0 6px" }}>
-						<strong>3.</strong> When you send a task, atcli sends it to the AI website and reads the
-						response.
-					</p>
-					<p style={{ margin: "0" }}>
-						<strong>4.</strong> Tool calls in the response are automatically extracted and executed, just
-						like with API providers.
-					</p>
-				</div>
-			</details>
+						{/* Slot body */}
+						{expandedSlot === idx && (
+							<div
+								style={{
+									padding: "10px 12px",
+									display: "flex",
+									flexDirection: "column",
+									gap: 8,
+									borderTop: "1px solid var(--vscode-panel-border)",
+									background: "var(--vscode-input-background)",
+								}}>
+								{/* Preset picker */}
+								<div>
+									<label style={labelStyle}>Quick Preset</label>
+									<select
+										id={`atcli-slot-${idx}-preset`}
+										style={selectStyle}
+										value=""
+										onChange={(e) => {
+											const p = KNOWN_PROVIDERS.find((x) => x.baseUrl === e.target.value)
+											if (p) applyPreset(idx, p)
+										}}>
+										<option value="">— Select a provider —</option>
+										{KNOWN_PROVIDERS.map((p) => (
+											<option key={p.baseUrl} value={p.baseUrl}>
+												{p.label}
+											</option>
+										))}
+									</select>
+								</div>
 
-			{/* Warning about browser session */}
+								{/* Label + Priority row */}
+								<div style={{ display: "grid", gridTemplateColumns: "1fr 80px", gap: 6 }}>
+									<div>
+										<label style={labelStyle}>Slot Label</label>
+										<input
+											id={`atcli-slot-${idx}-label`}
+											style={inputStyle}
+											type="text"
+											value={slot.label}
+											placeholder="e.g. DeepSeek Primary"
+											onChange={(e) => updateSlot(idx, { label: e.target.value })}
+										/>
+									</div>
+									<div>
+										<label style={labelStyle}>Priority</label>
+										<input
+											id={`atcli-slot-${idx}-priority`}
+											style={inputStyle}
+											type="number"
+											min={1}
+											max={99}
+											value={slot.priority ?? idx + 1}
+											onChange={(e) =>
+												updateSlot(idx, { priority: Number.parseInt(e.target.value) || idx + 1 })
+											}
+										/>
+									</div>
+								</div>
+
+								{/* Base URL */}
+								<div>
+									<label style={labelStyle}>Base URL</label>
+									<input
+										id={`atcli-slot-${idx}-baseurl`}
+										style={inputStyle}
+										type="text"
+										value={slot.baseUrl}
+										placeholder="https://api.deepseek.com/v1"
+										onChange={(e) => updateSlot(idx, { baseUrl: e.target.value })}
+									/>
+								</div>
+
+								{/* API Key */}
+								<div>
+									<label style={labelStyle}>API Key</label>
+									<input
+										id={`atcli-slot-${idx}-apikey`}
+										style={inputStyle}
+										type="password"
+										value={slot.apiKey}
+										placeholder="sk-..."
+										onChange={(e) => updateSlot(idx, { apiKey: e.target.value })}
+									/>
+								</div>
+
+								{/* Model ID */}
+								<div>
+									<label style={labelStyle}>Model ID</label>
+									<input
+										id={`atcli-slot-${idx}-model`}
+										style={inputStyle}
+										type="text"
+										value={slot.modelId}
+										placeholder="deepseek-chat"
+										onChange={(e) => updateSlot(idx, { modelId: e.target.value })}
+									/>
+									<p style={{ margin: "3px 0 0", fontSize: 10, color: "var(--vscode-descriptionForeground)" }}>
+										The model sent in the API request body for this slot.
+									</p>
+								</div>
+
+								{/* Cost + Remove row */}
+								<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+									<div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+										<label style={{ ...labelStyle, margin: 0 }}>$/1M tokens (output):</label>
+										<input
+											id={`atcli-slot-${idx}-cost`}
+											style={{ ...inputStyle, width: 80 }}
+											type="number"
+											min={0}
+											step={0.01}
+											value={slot.costPerMToken ?? 0}
+											onChange={(e) =>
+												updateSlot(idx, { costPerMToken: Number.parseFloat(e.target.value) || 0 })
+											}
+										/>
+									</div>
+									{slots.length > 1 && (
+										<button
+											type="button"
+											id={`atcli-slot-${idx}-remove`}
+											onClick={() => removeSlot(idx)}
+											style={{
+												padding: "4px 10px",
+												borderRadius: 4,
+												border: "1px solid rgba(239,68,68,0.4)",
+												background: "rgba(239,68,68,0.08)",
+												color: "var(--vscode-errorForeground)",
+												cursor: "pointer",
+												fontSize: 11,
+												fontWeight: 500,
+											}}>
+											Remove Slot
+										</button>
+									)}
+								</div>
+							</div>
+						)}
+					</div>
+				))}
+			</div>
+
+			{/* Fallback info */}
 			<div
 				style={{
-					background: "rgba(234,179,8,0.1)",
-					border: "1px solid rgba(234,179,8,0.3)",
+					background: "rgba(16,185,129,0.06)",
+					border: "1px solid rgba(16,185,129,0.2)",
 					borderRadius: 6,
 					padding: "8px 12px",
 					fontSize: 11,
@@ -335,15 +494,36 @@ export const AtcliProvider = ({ showModelOptions, currentMode }: AtcliProviderPr
 					gap: 8,
 					alignItems: "flex-start",
 				}}>
-				<span style={{ fontSize: 14, flexShrink: 0 }}>⚠️</span>
+				<span style={{ fontSize: 13, flexShrink: 0 }}>🔄</span>
 				<span>
-					Browser automation requires{" "}
-					<strong style={{ color: "var(--vscode-editor-foreground)" }}>
-						atcli browser tools to be enabled
-					</strong>{" "}
-					in your settings, and you must be <strong>logged in</strong> to the selected site. The browser
-					window will be visible while atcli works.
+					<strong style={{ color: "var(--vscode-editor-foreground)" }}>Auto-fallback enabled:</strong> If a
+					slot returns 429 Too Many Requests, it will be cooldown for 60s and the next slot will be tried.
+					Slots with 3+ consecutive errors trigger a circuit breaker (5 min recovery).
 				</span>
+			</div>
+
+			{/* Docs links */}
+			<div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+				{[
+					{ label: "DeepSeek API", url: "https://platform.deepseek.com" },
+					{ label: "Groq (free)", url: "https://console.groq.com" },
+					{ label: "Cerebras (free)", url: "https://cloud.cerebras.ai" },
+					{ label: "NVIDIA NIM (free)", url: "https://build.nvidia.com" },
+					{ label: "SambaNova (free)", url: "https://cloud.sambanova.ai" },
+				].map((link) => (
+					<a
+						key={link.url}
+						href={link.url}
+						target="_blank"
+						rel="noreferrer"
+						style={{
+							fontSize: 10,
+							color: "var(--vscode-textLink-foreground)",
+							textDecoration: "none",
+						}}>
+						{link.label} ↗
+					</a>
+				))}
 			</div>
 		</div>
 	)

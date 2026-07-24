@@ -77,7 +77,7 @@ export type ProviderFamily =
 	| "dify"
 	| "ollama"
 	| "sap-ai-core"
-	| "atcli-browser";
+	| "atcli-router";
 
 export interface BuiltinSpec {
 	id: string;
@@ -466,7 +466,7 @@ function inferProtocol(spec: BuiltinSpec): ProviderProtocol {
 		case "google":
 		case "vertex":
 			return "gemini";
-		case "atcli-browser":
+		case "atcli-router":
 			return "openai-chat";
 		default:
 			return "openai-chat";
@@ -496,8 +496,8 @@ function inferClient(spec: BuiltinSpec): ProviderClient {
 		case "ollama":
 		case "sap-ai-core":
 			return "ai-sdk-community";
-		case "atcli-browser":
-			return "atcli-browser" as unknown as ProviderClient;
+		case "atcli-router":
+			return "openai-compatible" as unknown as ProviderClient;
 		default:
 			return "openai-compatible";
 	}
@@ -1163,119 +1163,154 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 	},
 	...OPENAI_COMPATIBLE_SPECS,
 	// -------------------------------------------------------------------------
-	// atcli Browser Provider
+	// atcli Smart Router
 	// -------------------------------------------------------------------------
 	{
 		id: "atcli",
-		name: "atcli (Browser AI)",
+		name: "atcli Smart Router",
 		description:
-			"Use AI websites through browser automation — no API key needed. " +
-			"Supports ChatGPT, DeepSeek, Gemini, Kimi, and Qwen.",
-		family: "atcli-browser",
+			"Route requests across multiple AI providers with automatic fallback. " +
+			"Supports any OpenAI-compatible endpoint: DeepSeek, Groq, Cerebras, " +
+			"NVIDIA NIM, Fireworks, Sambanova, Mistral, and more.",
+		family: "atcli-router",
 		popular: 3,
 		capabilities: ["tools"],
 		env: ["node"],
-		defaultModelId: "deepseek-chat",
+		defaultModelId: "router/auto",
 		modelsFactory: () => ({
-			// DeepSeek site models
-			"deepseek-chat": {
-				id: "deepseek-chat",
-				name: "DeepSeek Chat (Browser)",
-				description: "DeepSeek Chat via browser automation",
-				capabilities: ["streaming", "tools"],
+			// The router virtualises the model list — the actual model used
+			// on each request is determined by whichever slot handles it.
+			// These entries act as display names in the model picker.
+			"router/auto": {
+				id: "router/auto",
+				name: "Smart Router (auto)",
+				description:
+					"Automatically route to the best available configured slot",
+				supportsPromptCache: false,
 				contextWindow: 128000,
 			},
-			"deepseek-r2": {
-				id: "deepseek-r2",
-				name: "DeepSeek R2 (Browser)",
-				description: "DeepSeek R2 reasoning model via browser",
-				capabilities: ["streaming", "tools", "reasoning"],
+			// ── Popular free-tier targets ──────────────────────────────────
+			"deepseek/deepseek-chat": {
+				id: "deepseek/deepseek-chat",
+				name: "DeepSeek Chat (api.deepseek.com)",
+				description: "DeepSeek V3 via direct API — ~$0.27/1M output tokens",
+				supportsPromptCache: false,
+				inputPrice: 0.27,
+				outputPrice: 1.1,
+				contextWindow: 64000,
+			},
+			"deepseek/deepseek-reasoner": {
+				id: "deepseek/deepseek-reasoner",
+				name: "DeepSeek R1 (api.deepseek.com)",
+				description: "DeepSeek R1 reasoning via direct API",
+				supportsPromptCache: false,
+				supportsReasoning: true,
+				inputPrice: 0.55,
+				outputPrice: 2.19,
+				contextWindow: 64000,
+			},
+			"groq/llama-3.3-70b-versatile": {
+				id: "groq/llama-3.3-70b-versatile",
+				name: "Llama 3.3 70B (Groq — free tier)",
+				description:
+					"Llama 3.3 70B on Groq — extremely fast, free tier available",
+				supportsPromptCache: false,
+				inputPrice: 0.59,
+				outputPrice: 0.79,
 				contextWindow: 128000,
 			},
-			// ChatGPT site models
-			"gpt-4o-browser": {
-				id: "gpt-4o-browser",
-				name: "GPT-4o (Browser)",
-				description: "ChatGPT GPT-4o via browser automation",
-				capabilities: ["streaming", "tools", "images"],
+			"groq/deepseek-r1-distill-llama-70b": {
+				id: "groq/deepseek-r1-distill-llama-70b",
+				name: "DeepSeek R1 Distill 70B (Groq — free tier)",
+				description: "DeepSeek R1 distilled to Llama 70B on Groq",
+				supportsPromptCache: false,
+				supportsReasoning: true,
+				inputPrice: 0.75,
+				outputPrice: 0.99,
 				contextWindow: 128000,
 			},
-			"o3-browser": {
-				id: "o3-browser",
-				name: "o3 (Browser)",
-				description: "ChatGPT o3 reasoning model via browser",
-				capabilities: ["streaming", "tools", "reasoning"],
-				contextWindow: 200000,
-			},
-			"gpt-4.1-browser": {
-				id: "gpt-4.1-browser",
-				name: "GPT-4.1 (Browser)",
-				description: "ChatGPT GPT-4.1 via browser automation",
-				capabilities: ["streaming", "tools"],
-				contextWindow: 1000000,
-			},
-			// Gemini site models
-			"gemini-2.5-pro-browser": {
-				id: "gemini-2.5-pro-browser",
-				name: "Gemini 2.5 Pro (Browser)",
-				description: "Google Gemini 2.5 Pro via browser automation",
-				capabilities: ["streaming", "tools", "reasoning"],
-				contextWindow: 1000000,
-			},
-			"gemini-2.0-flash-browser": {
-				id: "gemini-2.0-flash-browser",
-				name: "Gemini 2.0 Flash (Browser)",
-				description: "Google Gemini 2.0 Flash via browser automation",
-				capabilities: ["streaming", "tools"],
-				contextWindow: 1000000,
-			},
-			// Kimi site models
-			"kimi-k2-browser": {
-				id: "kimi-k2-browser",
-				name: "Kimi K2 (Browser)",
-				description: "Moonshot Kimi K2 via browser automation",
-				capabilities: ["streaming", "tools"],
+			"cerebras/llama-3.3-70b": {
+				id: "cerebras/llama-3.3-70b",
+				name: "Llama 3.3 70B (Cerebras — free tier)",
+				description: "Ultra-fast inference on Cerebras wafer-scale chips",
+				supportsPromptCache: false,
+				inputPrice: 0.85,
+				outputPrice: 1.25,
 				contextWindow: 128000,
 			},
-			"kimi-k1.5-browser": {
-				id: "kimi-k1.5-browser",
-				name: "Kimi K1.5 (Browser)",
-				description: "Moonshot Kimi K1.5 via browser automation",
-				capabilities: ["streaming", "tools", "reasoning"],
+			"sambanova/Meta-Llama-3.3-70B-Instruct": {
+				id: "sambanova/Meta-Llama-3.3-70B-Instruct",
+				name: "Llama 3.3 70B (SambaNova — free tier)",
+				description: "Fast Llama on SambaNova's DataScale hardware",
+				supportsPromptCache: false,
+				inputPrice: 0.6,
+				outputPrice: 0.6,
 				contextWindow: 128000,
 			},
-			// Qwen site models
-			"qwen3-235b-browser": {
-				id: "qwen3-235b-browser",
-				name: "Qwen3 235B (Browser)",
-				description: "Alibaba Qwen3 235B via browser automation",
-				capabilities: ["streaming", "tools", "reasoning"],
-				contextWindow: 32000,
+			"fireworks/accounts/fireworks/models/llama-v3p3-70b-instruct": {
+				id: "fireworks/accounts/fireworks/models/llama-v3p3-70b-instruct",
+				name: "Llama 3.3 70B (Fireworks)",
+				description: "Llama 3.3 70B on Fireworks AI",
+				supportsPromptCache: false,
+				inputPrice: 0.9,
+				outputPrice: 0.9,
+				contextWindow: 131072,
 			},
-			"qwq-32b-browser": {
-				id: "qwq-32b-browser",
-				name: "QwQ 32B (Browser)",
-				description: "Alibaba QwQ 32B reasoning via browser",
-				capabilities: ["streaming", "tools", "reasoning"],
-				contextWindow: 32000,
+			"openai/gpt-4o-mini": {
+				id: "openai/gpt-4o-mini",
+				name: "GPT-4o Mini (OpenAI)",
+				description: "Affordable OpenAI model with strong reasoning",
+				supportsPromptCache: false,
+				inputPrice: 0.15,
+				outputPrice: 0.6,
+				contextWindow: 128000,
+			},
+			"openai/gpt-4o": {
+				id: "openai/gpt-4o",
+				name: "GPT-4o (OpenAI)",
+				description: "OpenAI's flagship multimodal model",
+				supportsPromptCache: false,
+				supportsImages: true,
+				inputPrice: 2.5,
+				outputPrice: 10.0,
+				contextWindow: 128000,
+			},
+			"nvidia/meta/llama-3.3-70b-instruct": {
+				id: "nvidia/meta/llama-3.3-70b-instruct",
+				name: "Llama 3.3 70B (NVIDIA NIM — free tier)",
+				description: "Llama on NVIDIA's free NIM inference API",
+				supportsPromptCache: false,
+				inputPrice: 0,
+				outputPrice: 0,
+				contextWindow: 128000,
 			},
 		}),
 		configFields: [
 			{
-				path: "atcliSite",
-				label: "AI Website",
+				path: "strategy",
+				label: "Routing Strategy",
 				type: "select",
 				description:
-					"Which AI website to use for browser-based inference. " +
-					"You must be logged in to the selected site in your browser.",
+					"How atcli selects which provider slot to use for each request.",
 				options: [
-					{ label: "DeepSeek (chat.deepseek.com)", value: "deepseek" },
-					{ label: "ChatGPT (chatgpt.com)", value: "chatgpt" },
-					{ label: "Gemini (gemini.google.com)", value: "gemini" },
-					{ label: "Kimi (kimi.moonshot.cn)", value: "kimi" },
-					{ label: "Qwen / Tongyi (tongyi.aliyun.com)", value: "qwen" },
+					{
+						label: "Priority (use highest-priority healthy slot)",
+						value: "priority",
+					},
+					{
+						label: "Round-Robin (cycle through slots evenly)",
+						value: "round-robin",
+					},
+					{
+						label: "Cost-Optimized (cheapest healthy slot first)",
+						value: "cost-optimized",
+					},
+					{
+						label: "Random (random healthy slot)",
+						value: "random",
+					},
 				],
-				defaultValue: "deepseek",
+				defaultValue: "priority",
 				required: true,
 			},
 		],

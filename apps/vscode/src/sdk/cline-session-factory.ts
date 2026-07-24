@@ -53,21 +53,6 @@ import { buildSapProviderConfig, type SapProviderConfig } from "./sap-config"
 import type { SdkSessionHost } from "./session-host"
 
 // ---------------------------------------------------------------------------
-// Lazy singleton for the atcli browser bridge
-// ---------------------------------------------------------------------------
-
-// biome-ignore lint/suspicious/noExplicitAny: Lazy singleton for browser session
-let atcliBrowserSessionInstance: any = null
-
-async function getOrCreateBrowserSessionForBridge() {
-	if (!atcliBrowserSessionInstance) {
-		const { BrowserSession } = await import("../services/browser/BrowserSession")
-		atcliBrowserSessionInstance = new BrowserSession(StateManager.get())
-	}
-	return atcliBrowserSessionInstance
-}
-
-// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -353,7 +338,7 @@ const PROVIDER_API_KEY_MAP: Record<string, keyof ApiConfiguration> = {
 	wandb: "wandbApiKey",
 	"qwen-code": "qwenApiKey",
 	oca: "ocaApiKey",
-	// atcli browser provider — no API key needed
+	// atcli smart router — no single API key (slots are configured per-provider)
 	atcli: "apiKey",
 }
 
@@ -389,7 +374,7 @@ const PROVIDER_MODEL_ID_MAP: Record<string, { plan: keyof ApiConfiguration; act:
 	hicap: { plan: "planModeHicapModelId", act: "actModeHicapModelId" },
 	nousResearch: { plan: "planModeNousResearchModelId", act: "actModeNousResearchModelId" },
 	"vercel-ai-gateway": { plan: "planModeVercelAiGatewayModelId", act: "actModeVercelAiGatewayModelId" },
-	// atcli browser provider uses generic model ID field
+	// atcli smart router uses generic model ID field
 	atcli: { plan: "planModeApiModelId", act: "actModeApiModelId" },
 }
 
@@ -892,24 +877,19 @@ export async function buildSessionConfig(input: SessionConfigInput): Promise<Cor
 	// Spread the cloud config first so the explicit fields below — notably the
 	// proxy/CA-aware fetch — can never be clobbered if those types gain matching keys.
 
-	// For the atcli browser provider, inject the BrowserSessionBridge so the
-	// SDK provider can control the browser without VS Code API dependencies.
-	let atcliBrowserOptions: Record<string, unknown> | undefined
+	// For the atcli smart router, inject slot configuration from VS Code settings
+	let atcliRouterOptions: Record<string, unknown> | undefined
 	if (sdkProviderId === "atcli") {
-		try {
-			const { getAtcliBrowserBridge } = await import("./atcli-browser-bridge")
-			const browserSession = await getOrCreateBrowserSessionForBridge()
-			const bridge = getAtcliBrowserBridge(() => browserSession)
-			// Read the atcliSite setting from the provider config
-			const atcliSite = (apiConfig as Record<string, unknown>)?.atcliSite as string | undefined
-			atcliBrowserOptions = {
-				browserBridge: bridge,
-				atcliSite: atcliSite ?? "deepseek",
-			}
-			Logger.log(`[SessionFactory] atcli browser bridge injected (site: ${atcliBrowserOptions.atcliSite})`)
-		} catch (err) {
-			Logger.warn("[SessionFactory] Failed to create atcli browser bridge:", err)
+		const cfg = apiConfig as Record<string, unknown>
+		atcliRouterOptions = {
+			strategy: cfg.smartRouterStrategy ?? "priority",
+			slots: cfg.smartRouterSlots ?? [],
 		}
+		Logger.log(
+			`[SessionFactory] atcli smart router configured: strategy=${
+				atcliRouterOptions.strategy
+			}, slots=${(atcliRouterOptions.slots as unknown[]).length}`,
+		)
 	}
 
 	const providerConfig = {
@@ -919,7 +899,7 @@ export async function buildSessionConfig(input: SessionConfigInput): Promise<Cor
 		...(apiKey ? { apiKey } : {}),
 		...(baseUrl !== undefined ? { baseUrl } : {}),
 		...(knownModels && Object.keys(knownModels).length > 0 ? { knownModels } : {}),
-		...(atcliBrowserOptions ? { options: atcliBrowserOptions } : {}),
+		...(atcliRouterOptions ? { options: atcliRouterOptions } : {}),
 		fetch,
 	}
 

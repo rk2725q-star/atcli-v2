@@ -100,12 +100,9 @@ export {
 	resolveProviderRequestHeaders,
 } from "./providers/request-headers";
 export type {
-	AtcliBrowserSiteConfig,
-	AtcliSiteId,
-	BrowserSessionBridge,
-} from "./providers/vendors/atcli-browser";
-export {
-	ATCLI_SITE_ADAPTERS,
-	ATCLI_SITE_MODELS,
-} from "./providers/vendors/atcli-browser";
+	AtcliRouterOptions,
+	RouterSlot,
+	RouterStrategy,
+} from "./providers/vendors/atcli-router";
+export { createAtcliRouterProvider } from "./providers/vendors/atcli-router";
 export { disposeLangfuseTelemetry } from "./services/langfuse-telemetry";
